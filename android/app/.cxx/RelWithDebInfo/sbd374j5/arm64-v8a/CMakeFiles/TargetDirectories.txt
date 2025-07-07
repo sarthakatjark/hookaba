@@ -1,0 +1,2 @@
+/Users/fao/Documents/hookaba/android/app/.cxx/RelWithDebInfo/sbd374j5/arm64-v8a/CMakeFiles/rebuild_cache.dir
+/Users/fao/Documents/hookaba/android/app/.cxx/RelWithDebInfo/sbd374j5/arm64-v8a/CMakeFiles/edit_cache.dir
