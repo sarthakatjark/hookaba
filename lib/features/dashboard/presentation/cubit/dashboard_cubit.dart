@@ -61,7 +61,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     jsBridgeService = JsBridgeService();
     jsBridgeService.init();
     jsBridgeService.tlvStream.listen((tlvBytes) {
-      //sendTlvToBle(tlvBytes);
+      sendTlvToBle(tlvBytes);
     });
   }
 
@@ -84,6 +84,32 @@ class DashboardCubit extends Cubit<DashboardState> {
 
     _logger.d('✅ DashboardCubit cleanup complete');
     return super.close();
+  }
+
+  Future<void> sendTlvToBle(Uint8List tlvBytes) async {
+    if (_connectedDevice == null) {
+      _logger.e('No device connected. Cannot send TLV.');
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'No device connected. Cannot send TLV.',
+      ));
+      return;
+    }
+    try {
+      await dashboardRepository.sendTlvToBle(_connectedDevice!, tlvBytes);
+      emit(state.copyWith(uploadProgress: 1.0));
+      _logger.i('TLV sent to BLE device.');
+      // Optionally reset progress after a short delay
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(state.copyWith(uploadProgress: null));
+    } catch (e) {
+      _logger.e('Failed to send TLV: $e');
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'Failed to send TLV: $e',
+        uploadProgress: null,
+      ));
+    }
   }
 
   void setConnectedDevice(BluetoothDevice device) {
@@ -176,7 +202,8 @@ class DashboardCubit extends Cubit<DashboardState> {
   Future<void> sendImageOrGifViaJsBridge(Map<String, dynamic> jsonCmd,
       {String? base64Image, String? gifBase64}) async {
     try {
-      await dashboardRepository.sendImageOrGifViaJsBridge(jsonCmd, base64Image: base64Image, gifBase64: gifBase64);
+      await dashboardRepository.sendImageOrGifViaJsBridge(jsonCmd,
+          base64Image: base64Image, gifBase64: gifBase64);
       emit(state.copyWith(status: DashboardStatus.success));
     } catch (e) {
       emit(state.copyWith(
@@ -217,7 +244,8 @@ class DashboardCubit extends Cubit<DashboardState> {
       return;
     }
     try {
-      await dashboardRepository.sendBlankCanvas(_connectedDevice!, width: width, height: height);
+      await dashboardRepository.sendBlankCanvas(_connectedDevice!,
+          width: width, height: height);
       emit(state.copyWith(status: DashboardStatus.success));
     } catch (e) {
       emit(state.copyWith(
@@ -378,7 +406,8 @@ class DashboardCubit extends Cubit<DashboardState> {
       return;
     }
     try {
-      await dashboardRepository.getProgramResourceIds(_connectedDevice!, programIds);
+      await dashboardRepository.getProgramResourceIds(
+          _connectedDevice!, programIds);
       emit(state.copyWith(status: DashboardStatus.success));
     } catch (e) {
       emit(state.copyWith(

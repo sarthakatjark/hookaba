@@ -332,6 +332,39 @@ class DashboardRepositoryImpl {
     await jsBridgeService.sendRTDraw(cmd);
   }
 
+  Future<void> sendTlvToBle(BluetoothDevice device, Uint8List tlvBytes) async {
+    final services = await device.discoverServices();
+    BluetoothCharacteristic? writeChar;
+    for (var service in services) {
+      for (var char in service.characteristics) {
+        final charUuid = char.uuid.toString().toLowerCase();
+        if (charUuid.contains("fff2") || charUuid.contains("ff02")) {
+          writeChar = char;
+          break;
+        }
+      }
+      if (writeChar != null) break;
+    }
+    if (writeChar == null) {
+      throw Exception('Write characteristic not found for TLV');
+    }
+
+    // Send 4-byte header first
+    final header = Uint8List(4);
+    ByteData.view(header.buffer).setUint32(0, tlvBytes.length, Endian.little);
+    await writeChar.write(header, withoutResponse: true);
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    // Send in chunks if needed
+    const mtu = 180;
+    for (int i = 0; i < tlvBytes.length; i += mtu) {
+      final chunk = tlvBytes.sublist(
+          i, (i + mtu > tlvBytes.length) ? tlvBytes.length : i + mtu);
+      await writeChar.write(chunk, withoutResponse: true);
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+  }
+
   Map<String, dynamic>? animationTypeToInfoAnimate(AnimationType? type) {
     if (type == null) return null;
     switch (type) {
