@@ -86,7 +86,7 @@ class AppRouter {
           return BlocProvider.value(
             value: sl<DashboardCubit>(),
             child: BlocProvider<SplitScreenCubit>(
-              create: (_) => SplitScreenCubit(),
+              create: (_) => SplitScreenCubit(splitScreenRepository: sl()),
               child: SplitScreenPreviewPage(
                 templateIndex: templateIndex,
                 initialRatio: ratio,

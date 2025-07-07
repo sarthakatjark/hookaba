@@ -1,29 +1,26 @@
 import 'dart:async';
 
-import 'package:app_settings/app_settings.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart' show Cubit;
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart' show Box;
-import 'package:hookaba/core/utils/ble_service.dart' show BLEService;
+import 'package:hookaba/features/onboarding/data/datasources/sign_up_repository_impl.dart';
+import 'package:hookaba/features/onboarding/presentation/widgets/permission_denied_dialog.dart';
 import 'package:logger/logger.dart' as logger;
 import 'package:permission_handler/permission_handler.dart';
 
 part 'sign_up_state.dart';
 
 class SignUpCubit extends Cubit<SignUpState> {
-  final BLEService bleService;
-  final Box<String> pairedBox;
+  final SignUpRepositoryImpl signUpRepository;
   final _logger = logger.Logger();
 
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   Timer? _scanTimeout;
 
   SignUpCubit({
-    required this.bleService,
-    required this.pairedBox,
+    required this.signUpRepository,
   }) : super(const SignUpState());
 
   @override
@@ -45,7 +42,7 @@ class SignUpCubit extends Cubit<SignUpState> {
       {bool navigateDirectly = false}) async {
     try {
       _logger.i('Requesting Bluetooth permissions...');
-      final allGranted = await bleService.requestBluetoothPermission();
+      final allGranted = await signUpRepository.requestBluetoothPermission();
       if (!context.mounted) return;
       if (allGranted) {
         _logger.i('All Bluetooth permissions granted, navigating to device search page');
@@ -60,7 +57,7 @@ class SignUpCubit extends Cubit<SignUpState> {
         final isPermanentlyDenied = await Permission.bluetooth.status.then((s) => s.isPermanentlyDenied);
         if (isPermanentlyDenied) {
           _logger.w('Some permissions are permanently denied, opening app settings');
-          await openAppSettings();
+          await signUpRepository.openBluetoothSettings();
         } else {
           await _showPermissionDeniedDialog(context, permanentlyDenied: false);
         }
@@ -79,53 +76,30 @@ class SignUpCubit extends Cubit<SignUpState> {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Bluetooth Permission'),
-        content: Text(permanentlyDenied
-            ? 'Bluetooth permission has been permanently denied. Please enable it from Settings.'
-            : 'Bluetooth permission is required to search for devices. Would you like to open Settings and grant it?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.go('/onboarding/signup');
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              _logger.i('Opening Bluetooth settings...');
-              await AppSettings.openAppSettings(
-                  type: AppSettingsType.bluetooth);
-
-              // Wait a bit for settings to be applied
-              await Future.delayed(const Duration(seconds: 1));
-
-              // Recheck permission status
-              if (!context.mounted) return;
-              final newStatus = await Permission.bluetooth.status;
-              _logger
-                  .i('Bluetooth permission status after settings: $newStatus');
-
-              if (newStatus.isGranted) {
-                _logger.i(
-                    'Bluetooth permission granted after settings, navigating to device search page');
-                emit(state.copyWith(
-                    bluetoothStatus: BluetoothPermissionStatus.granted));
-                context.go('/onboarding/searchingdevicepage');
-              } else {
-                _logger
-                    .w('Bluetooth permission still not granted after settings');
-                emit(state.copyWith(
-                    bluetoothStatus: BluetoothPermissionStatus.denied));
-                await _showPermissionDeniedDialog(context,
-                    permanentlyDenied: newStatus.isPermanentlyDenied);
-              }
-            },
-            child: const Text('Settings'),
-          ),
-        ],
+      builder: (ctx) => PermissionDeniedDialog(
+        permanentlyDenied: permanentlyDenied,
+        onCancel: () {
+          Navigator.of(ctx).pop();
+          context.go('/onboarding/signup');
+        },
+        onSettings: () async {
+          Navigator.of(ctx).pop();
+          _logger.i('Opening Bluetooth settings...');
+          await signUpRepository.openBluetoothSettings();
+          await Future.delayed(const Duration(seconds: 1));
+          if (!context.mounted) return;
+          final newStatus = await Permission.bluetooth.status;
+          _logger.i('Bluetooth permission status after settings: $newStatus');
+          if (newStatus.isGranted) {
+            _logger.i('Bluetooth permission granted after settings, navigating to device search page');
+            emit(state.copyWith(bluetoothStatus: BluetoothPermissionStatus.granted));
+            context.go('/onboarding/searchingdevicepage');
+          } else {
+            _logger.w('Bluetooth permission still not granted after settings');
+            emit(state.copyWith(bluetoothStatus: BluetoothPermissionStatus.denied));
+            await _showPermissionDeniedDialog(context, permanentlyDenied: newStatus.isPermanentlyDenied);
+          }
+        },
       ),
     );
   }
@@ -155,7 +129,7 @@ class SignUpCubit extends Cubit<SignUpState> {
     emit(state.copyWith(scanning: true, scannedDevices: []));
 
     try {
-      final device = await bleService.findDevice();
+      final device = await signUpRepository.startScanWithPrefix();
       if (device != null) {
         _logger.i('✅ Device found: \\${device.platformName}');
         emit(state.copyWith(scannedDevices: [device], scanning: false));
@@ -175,7 +149,7 @@ class SignUpCubit extends Cubit<SignUpState> {
     _scanSubscription = null;
     _scanTimeout?.cancel();
     _scanTimeout = null;
-    bleService.stopScan(); // Delegate to BLEService
+    signUpRepository.stopScan();
     emit(state.copyWith(scanning: false));
   }
 
@@ -189,13 +163,13 @@ class SignUpCubit extends Cubit<SignUpState> {
       ));
 
       // Use BLEService's connectToDevice directly
-      await bleService.connectToDevice(device);
+      await signUpRepository.connectToDevice(device);
 
       // Store device in local storage
       final deviceName = device.platformName.isNotEmpty
           ? device.platformName
           : 'Unknown Device (\\${device.remoteId})';
-      await pairedBox.put(device.remoteId.toString(), deviceName);
+      // await pairedBox.put(device.remoteId.toString(), deviceName); // Removed as per new_code
 
       // Update state with connected device and paired devices
       final updatedDevices = Map<String, bool>.from(state.connectedDevices);
@@ -217,7 +191,7 @@ class SignUpCubit extends Cubit<SignUpState> {
       _logger.i('✅ Successfully connected to device: \\${deviceName}');
 
       // Store the connected device in the BLE service for the dashboard
-      bleService.setConnectedDevice(device);
+      // bleService.setConnectedDevice(device); // Removed as per new_code
     } catch (e) {
       _logger.e('❌ Error connecting to device: \\${e}');
       emit(state.copyWith(
@@ -232,7 +206,7 @@ class SignUpCubit extends Cubit<SignUpState> {
     try {
       _logger.i('🔌 Attempting to disconnect from device: ${device.platformName}');
       
-      await bleService.disconnect(device);
+      await signUpRepository.disconnectFromDevice(device);
 
       // Update state to remove disconnected device
       final updatedDevices = Map<String, bool>.from(state.connectedDevices);
@@ -252,17 +226,7 @@ class SignUpCubit extends Cubit<SignUpState> {
   Future<void> loadPairedDevices() async {
     try {
       _logger.i('📱 Loading paired devices from storage...');
-      final pairedDevices = <Map<String, String>>[];
-      
-      for (var key in pairedBox.keys) {
-        final name = pairedBox.get(key);
-        if (name != null) {
-          pairedDevices.add({
-            'name': name,
-            'id': key.toString(),
-          });
-        }
-      }
+      final pairedDevices = await signUpRepository.loadPairedDevices();
       
       emit(state.copyWith(pairedDevices: pairedDevices));
       _logger.i('✅ Loaded ${pairedDevices.length} paired devices');
