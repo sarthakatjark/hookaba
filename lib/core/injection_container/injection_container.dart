@@ -22,6 +22,11 @@ Future<void> init() async {
   // Services
   sl.registerLazySingleton(() => BLEService());
 
+  // Initialize and register JsBridgeService
+  final jsBridgeService = JsBridgeService();
+  await jsBridgeService.init();
+  sl.registerLazySingleton<JsBridgeService>(() => jsBridgeService);
+
   // Repositories
   sl.registerLazySingleton(() => SignUpRepositoryImpl(
     bleService: sl<BLEService>(),
@@ -36,7 +41,7 @@ Future<void> init() async {
     bleService: sl<BLEService>(),
     dashboardRepository: DashboardRepositoryImpl(
       bleService: sl<BLEService>(),
-      jsBridgeService: JsBridgeService(),
+      jsBridgeService: sl<JsBridgeService>(),
     ),
   ));
 }
