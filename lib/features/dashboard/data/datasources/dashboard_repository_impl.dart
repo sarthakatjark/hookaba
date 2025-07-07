@@ -8,10 +8,12 @@ import 'package:hookaba/core/utils/enum.dart' show AnimationType;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:logger/logger.dart' as logger;
 
 class DashboardRepositoryImpl {
   final BLEService bleService;
   final JsBridgeService jsBridgeService;
+  final _logger = logger.Logger();
 
   DashboardRepositoryImpl({
     required this.bleService,
@@ -51,8 +53,19 @@ class DashboardRepositoryImpl {
     await sendJsonCommand(device, cmd);
   }
 
-  Future<void> sendImageOrGifViaJsBridge(Map<String, dynamic> jsonCmd, {String? base64Image, String? gifBase64}) async {
-    await jsBridgeService.sendImageOrGif(jsonCmd, base64Image: base64Image, gifBase64: gifBase64);
+  Future<void> sendImageOrGifViaJsBridge(Map<String, dynamic> jsonCmd,
+      {String? base64Image, String? gifBase64}) async {
+    _logger.i('🧩 Sending image/GIF to JS bridge. Command: $jsonCmd');
+    if (gifBase64 != null) {
+      _logger.d('🌀 Detected GIF. Length: ${gifBase64.length} base64 chars');
+    }
+    if (base64Image != null) {
+      _logger
+          .d('🖼️ Detected image. Length: ${base64Image.length} base64 chars');
+    }
+    await jsBridgeService.sendImageOrGif(jsonCmd,
+        base64Image: base64Image, gifBase64: gifBase64);
+    _logger.i('✅ JS bridge command sent.');
   }
 
   Future<void> uploadImageOrGif(BluetoothDevice device, XFile file) async {
