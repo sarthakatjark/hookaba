@@ -95,7 +95,13 @@ class DashboardCubit extends Cubit<DashboardState> {
       return;
     }
     try {
-      await dashboardRepository.sendTlvToBle(_connectedDevice!, tlvBytes);
+      await dashboardRepository.sendTlvToBle(
+        _connectedDevice!,
+        tlvBytes,
+        onProgress: (progress) {
+          emit(state.copyWith(uploadProgress: progress));
+        },
+      );
       emit(state.copyWith(uploadProgress: 1.0));
       _logger.i('TLV sent to BLE device.');
       // Optionally reset progress after a short delay

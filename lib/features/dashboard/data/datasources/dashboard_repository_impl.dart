@@ -345,7 +345,11 @@ class DashboardRepositoryImpl {
     await jsBridgeService.sendRTDraw(cmd);
   }
 
-  Future<void> sendTlvToBle(BluetoothDevice device, Uint8List tlvBytes) async {
+  Future<void> sendTlvToBle(
+    BluetoothDevice device,
+    Uint8List tlvBytes, {
+    void Function(double progress)? onProgress,
+  }) async {
     final services = await device.discoverServices();
     BluetoothCharacteristic? writeChar;
     for (var service in services) {
@@ -374,6 +378,9 @@ class DashboardRepositoryImpl {
       final chunk = tlvBytes.sublist(
           i, (i + mtu > tlvBytes.length) ? tlvBytes.length : i + mtu);
       await writeChar.write(chunk, withoutResponse: true);
+      if (onProgress != null) {
+        onProgress((i + chunk.length) / tlvBytes.length);
+      }
       await Future.delayed(const Duration(milliseconds: 100));
     }
   }
