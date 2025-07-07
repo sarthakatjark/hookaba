@@ -43,6 +43,7 @@ Future<void> init() async {
       bleService: sl<BLEService>(),
       jsBridgeService: sl<JsBridgeService>(),
     ),
+    jsBridgeService: sl<JsBridgeService>(),
   ));
 }
 

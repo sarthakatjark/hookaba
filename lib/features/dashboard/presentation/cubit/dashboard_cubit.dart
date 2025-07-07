@@ -21,7 +21,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   final _logger = logger.Logger();
   //final _imagePicker = ImagePicker();
 
-  late final JsBridgeService jsBridgeService;
+  final JsBridgeService jsBridgeService;
 
   BluetoothDevice? _connectedDevice;
   bool _isDeviceConnected = false;
@@ -39,10 +39,11 @@ class DashboardCubit extends Cubit<DashboardState> {
   DashboardCubit({
     required this.bleService,
     required this.dashboardRepository,
+    required this.jsBridgeService,
     Map<String, dynamic>? extra,
   }) : super(const DashboardState()) {
     _logger.i(
-        'DashboardCubit initialized. Initial state: _connectedDevice = $_connectedDevice, _isDeviceConnected = $_isDeviceConnected');
+        'DashboardCubit initialized. Initial state: _connectedDevice =  [32m$_connectedDevice, _isDeviceConnected = $_isDeviceConnected');
 
     // Initialize with connected device from BLEService
     final connectedDevice = bleService.connectedDevice;
@@ -57,9 +58,7 @@ class DashboardCubit extends Cubit<DashboardState> {
           'Successfully initialized with connected device: ${connectedDevice.platformName}');
     }
 
-    // Initialize JS bridge
-    jsBridgeService = JsBridgeService();
-    jsBridgeService.init();
+    // Listen to JS bridge TLV stream
     jsBridgeService.tlvStream.listen((tlvBytes) {
       sendTlvToBle(tlvBytes);
     });
@@ -416,4 +415,4 @@ class DashboardCubit extends Cubit<DashboardState> {
       ));
     }
   }
-}
+} 
