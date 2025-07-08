@@ -52,7 +52,7 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                       children: [
                         Text(
                           "Bringing your vibe to life...",
-                          style: AppFonts.orbitron(
+                          style: AppFonts.audiowideStyle(
                               fontSize: 16, color: Colors.white),
                         ),
                         const SizedBox(height: 8),
@@ -60,13 +60,13 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                           children: [
                             Text(
                               "${(state.uploadProgress! * 100).toStringAsFixed(0)}%",
-                              style: AppFonts.orbitron(
+                              style: AppFonts.audiowideStyle(
                                   fontSize: 14, color: Colors.white),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               ": 30 seconds remaining",
-                              style: AppFonts.orbitron(
+                              style: AppFonts.audiowideStyle(
                                   fontSize: 14, color: Colors.white),
                             ),
                             const Spacer(),
@@ -130,14 +130,14 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                         ),
                         Text(
                           "Upload your images/videos/animations",
-                          style: AppFonts.orbitron(
+                          style: AppFonts.audiowideStyle(
                               fontSize: 14, color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           "Please upload files up to 8MB in size.",
-                          style: AppFonts.orbitron(
+                          style: AppFonts.audiowideStyle(
                               fontSize: 12, color: Colors.grey),
                           textAlign: TextAlign.center,
                         ),
@@ -146,9 +146,8 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                           valueListenable: pickedFile,
                           builder: (context, file, _) => ElevatedButton(
                             onPressed: () async {
-                              final cubit = context.read<DashboardCubit>();
-                              final processedFile =
-                                  await cubit.pickAndProcessImage(context);
+                              final processedFile = await dashboardCubit
+                                  .pickAndProcessImage(context);
                               if (processedFile != null) {
                                 pickedFile.value = processedFile;
                                 ScaffoldMessenger.of(context).showSnackBar(

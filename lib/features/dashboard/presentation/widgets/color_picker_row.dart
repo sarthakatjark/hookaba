@@ -44,8 +44,8 @@ class ColorPickerRow extends StatelessWidget {
           children: [
             if (showSelectedIndicator)
               Container(
-                width: 20,
-                height: 20,
+                width: 25,
+                height: 25,
                 margin: const EdgeInsets.only(right: 8),
                 decoration: BoxDecoration(
                   color: selectedColor,

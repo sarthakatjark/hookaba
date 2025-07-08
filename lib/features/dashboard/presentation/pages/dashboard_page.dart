@@ -100,7 +100,7 @@ class DashboardPage extends HookWidget {
                             onTap: () => context.push('/dashboard/programs'),
                             child: Text(
                               "VIEW ALL",
-                              style: AppFonts.orbitron(
+                              style: AppFonts.audiowideStyle(
                                 fontSize: 12,
                                 color: Colors.blueAccent,
                               ),

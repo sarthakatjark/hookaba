@@ -234,4 +234,30 @@ class SignUpCubit extends Cubit<SignUpState> {
       _logger.e('❌ Error loading paired devices: $e');
     }
   }
+
+  // Validation functions
+  static String? validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Name is required';
+    }
+    if (value.length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    if (!RegExp(r'^[a-zA-Z\s]+').hasMatch(value)) {
+      return 'Name can only contain letters and spaces';
+    }
+    return null;
+  }
+
+  static String? validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Phone number is required';
+    }
+    // Remove any non-digit characters for validation
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 10 || digits.length > 11) {
+      return 'Phone number must be 10-11 digits';
+    }
+    return null;
+  }
 }

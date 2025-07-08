@@ -65,14 +65,14 @@ class SplitScreenUploadModal extends StatelessWidget {
                 ),
                 Text(
                   "Upload your images/videos/animations",
-                  style: AppFonts.orbitron(
+                  style: AppFonts.audiowideStyle(
                       fontSize: 14, color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Please upload files up to 8MB in size.",
-                  style: AppFonts.orbitron(
+                  style: AppFonts.audiowideStyle(
                       fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),

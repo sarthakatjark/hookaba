@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hookaba/core/common_widgets/primary_button.dart';
+import 'package:hookaba/core/common_widgets/primary_text_field.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 
@@ -14,35 +15,14 @@ class SignUpPage extends HookWidget {
   const SignUpPage({super.key});
 
   // Validation functions
-  static String? validateName(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Name is required';
-    }
-    if (value.length < 2) {
-      return 'Name must be at least 2 characters';
-    }
-    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-      return 'Name can only contain letters and spaces';
-    }
-    return null;
-  }
-
-  static String? validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Phone number is required';
-    }
-    // Remove any non-digit characters for validation
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.length < 10 || digits.length > 11) {
-      return 'Phone number must be 10-11 digits';
-    }
-    return null;
-  }
+  
 
   @override
   Widget build(BuildContext context) {
     final nameController = useTextEditingController();
     final phoneController = useTextEditingController();
+    final phoneFocusNode = useFocusNode();
+    final phoneFocused = useState(false);
     final cubit = context.read<SignUpCubit>();
     final state = context.watch<SignUpCubit>().state;
 
@@ -54,8 +34,8 @@ class SignUpPage extends HookWidget {
 
     // Validate form
     void validateForm() {
-      nameError.value = validateName(nameController.text);
-      phoneError.value = validatePhone(phoneController.text);
+      nameError.value = SignUpCubit.validateName(nameController.text);
+      phoneError.value = SignUpCubit.validatePhone(phoneController.text);
       isFormValid.value = nameError.value == null && phoneError.value == null;
     }
 
@@ -63,7 +43,13 @@ class SignUpPage extends HookWidget {
       nameController.text = state.name;
       phoneController.text = state.phone;
       validateForm(); // Initial validation
-      return null;
+      void focusListener() {
+        phoneFocused.value = phoneFocusNode.hasFocus;
+      }
+      phoneFocusNode.addListener(focusListener);
+      return () {
+        phoneFocusNode.removeListener(focusListener);
+      };
     }, []);
 
     return Scaffold(
@@ -90,50 +76,18 @@ class SignUpPage extends HookWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              TextField(
+              PrimaryTextField(
                 controller: nameController,
                 onChanged: (value) {
                   cubit.nameChanged(value);
                   if (showValidation.value) validateForm();
                 },
+                hintText: 'Name',
+                //errorText: showValidation.value ? nameError.value : null,
+                suffixIcon: nameError.value == null && nameController.text.isNotEmpty
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
                 textCapitalization: TextCapitalization.words,
-                style: AppFonts.orbitron(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.text,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Name',
-                  filled: true,
-                  fillColor: AppColors.inputFill,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.redAccent),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.redAccent, width: 2),
-                  ),
-                  hintStyle: AppFonts.orbitron(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  suffixIcon: nameError.value == null && nameController.text.isNotEmpty
-                      ? const Icon(Icons.check_circle, color: Colors.green)
-                      : null,
-                ),
               ),
               if (showValidation.value && nameError.value != null)
                 Padding(
@@ -148,7 +102,7 @@ class SignUpPage extends HookWidget {
                       const SizedBox(width: 8),
                       Text(
                         nameError.value!,
-                        style: AppFonts.orbitron(
+                        style: AppFonts.audiowideStyle(
                           fontSize: 12,
                           color: Colors.redAccent,
                         ),
@@ -157,8 +111,9 @@ class SignUpPage extends HookWidget {
                   ),
                 ),
               const SizedBox(height: 16),
-              TextField(
+              PrimaryTextField(
                 controller: phoneController,
+                focusNode: phoneFocusNode,
                 onChanged: (value) {
                   cubit.phoneChanged(value);
                   if (showValidation.value) validateForm();
@@ -168,47 +123,15 @@ class SignUpPage extends HookWidget {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(11),
                 ],
-                style: AppFonts.orbitron(
+                hintText: 'Phone Number',
+                //errorText: showValidation.value ? phoneError.value : null,
+                suffixIcon: phoneError.value == null && phoneController.text.isNotEmpty
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+                prefixText: phoneFocused.value ? '+91 ' : null,
+                prefixStyle: AppFonts.audiowideStyle(
                   fontSize: 16,
                   color: AppColors.text,
-                  fontWeight: FontWeight.bold,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Phone Number',
-                  filled: true,
-                  fillColor: AppColors.inputFill,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.redAccent),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.redAccent, width: 2),
-                  ),
-                  hintStyle: AppFonts.orbitron(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  suffixIcon: phoneError.value == null && phoneController.text.isNotEmpty
-                      ? const Icon(Icons.check_circle, color: Colors.green)
-                      : null,
-                  prefixText: '+91 ',
-                  prefixStyle: AppFonts.orbitron(
-                    fontSize: 16,
-                    color: AppColors.text,
-                  ),
                 ),
               ),
               if (showValidation.value && phoneError.value != null)
@@ -224,7 +147,7 @@ class SignUpPage extends HookWidget {
                       const SizedBox(width: 8),
                       Text(
                         phoneError.value!,
-                        style: AppFonts.orbitron(
+                        style: AppFonts.audiowideStyle(
                           fontSize: 12,
                           color: Colors.redAccent,
                         ),

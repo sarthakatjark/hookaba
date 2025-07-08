@@ -25,7 +25,7 @@ class PrimaryBottomNavBar extends StatelessWidget {
         topRight: Radius.circular(24),
       ),
       child: BottomNavigationBar(
-        backgroundColor: const Color(0xFF081122),
+        backgroundColor: const Color(0x80081122),
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.grey,
@@ -49,4 +49,4 @@ class PrimaryBottomNavBar extends StatelessWidget {
       ),
     );
   }
-} 
+}

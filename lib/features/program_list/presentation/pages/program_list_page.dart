@@ -42,7 +42,7 @@ class ProgramListPage extends HookWidget {
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
-                          _buildModeButton(
+                          _buildRadioButton(
                             context: context,
                             label: 'Loop',
                             isSelected: state.selectedMode == ProgramMode.loop,
@@ -52,8 +52,8 @@ class ProgramListPage extends HookWidget {
                               }
                             },
                           ),
-                          const SizedBox(width: 16),
-                          _buildModeButton(
+                          const SizedBox(width: 32),
+                          _buildRadioButton(
                             context: context,
                             label: 'Single',
                             isSelected: state.selectedMode == ProgramMode.single,
@@ -118,7 +118,7 @@ class ProgramListPage extends HookWidget {
     );
   }
 
-  Widget _buildModeButton({
+  Widget _buildRadioButton({
     required BuildContext context,
     required String label,
     required bool isSelected,
@@ -126,23 +126,42 @@ class ProgramListPage extends HookWidget {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey,
+      child: Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.blue,
+                width: 2,
+              ),
+              color: isSelected ? Colors.blue : Colors.transparent,
+            ),
+            child: isSelected
+                ? Center(
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : null,
           ),
-        ),
-        child: Text(
-          label,
-          style: AppFonts.audiowideStyle(
-            color: isSelected ? Colors.white : Colors.grey,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: AppFonts.audiowideStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

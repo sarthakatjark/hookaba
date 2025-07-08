@@ -45,7 +45,7 @@ class ActionCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     title,
-                    style: AppFonts.orbitron(
+                    style: AppFonts.audiowideStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,

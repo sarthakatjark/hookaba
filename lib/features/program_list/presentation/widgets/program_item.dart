@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hookaba/core/utils/app_fonts.dart';
 
 import '../cubit/program_list_state.dart';
 
@@ -40,7 +42,7 @@ class ProgramItem extends StatelessWidget {
                   child: Center(
                     child: Text(
                       program.icon,
-                      style: const TextStyle(fontSize: 24),
+                      style: AppFonts.dashHorizonStyle(fontSize: 24),
                     ),
                   ),
                 ),
@@ -48,19 +50,27 @@ class ProgramItem extends StatelessWidget {
                 Expanded(
                   child: Text(
                     program.name,
-                    style: const TextStyle(
+                    style: AppFonts.dashHorizonStyle(
+                      fontSize: 25,
                       color: Colors.white,
-                      fontSize: 16,
-                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.white),
+                  icon: SvgPicture.asset(
+                    'assets/images/edit.svg',
+                    width: 22,
+                    height: 22,
+                  ),
                   onPressed: onTap,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.white),
+                  icon: SvgPicture.asset(
+                    'assets/images/delete.svg',
+                    width: 22,
+                    height: 22,
+                  ),
                   onPressed: onDelete,
                 ),
               ],

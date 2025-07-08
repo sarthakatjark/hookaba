@@ -139,7 +139,7 @@ class OtpPage extends HookWidget {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       maxLength: 1,
-                      style: AppFonts.orbitron(
+                      style: AppFonts.audiowideStyle(
                         fontSize: 22,
                         color: AppColors.text,
                       ),

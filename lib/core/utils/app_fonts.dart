@@ -29,20 +29,6 @@ class AppFonts {
         color: color,
       );
 
-  // Orbitron for headings/titles
-  static TextStyle orbitron({
-    double fontSize = 24,
-    FontWeight fontWeight = FontWeight.normal,
-    Color? color,
-    double? letterSpacing,
-  }) =>
-      GoogleFonts.orbitron(
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        color: color,
-        letterSpacing: letterSpacing,
-      );
-
   // Roboto for body/secondary text
   static TextStyle body({
     double fontSize = 16,

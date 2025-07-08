@@ -55,7 +55,10 @@ class SearchingDevicePage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (state.pairedDevices.isNotEmpty) ...[
-                              Text('MY DEVICES', style: AppFonts.audiowideStyle(fontSize: 14, color: AppColors.textSecondary)),
+                              Text('MY DEVICES',
+                                  style: AppFonts.audiowideStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textSecondary)),
                               const SizedBox(height: 8),
                               Container(
                                 decoration: BoxDecoration(
@@ -66,40 +69,57 @@ class SearchingDevicePage extends StatelessWidget {
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: state.pairedDevices
-                                    .map((device) => device['name'])
-                                    .toSet()
-                                    .length,
-                                  itemBuilder: (context, idx) {
-                                    final uniqueDevices = state.pairedDevices
                                       .map((device) => device['name'])
                                       .toSet()
-                                      .toList();
+                                      .length,
+                                  itemBuilder: (context, idx) {
+                                    final uniqueDevices = state.pairedDevices
+                                        .map((device) => device['name'])
+                                        .toSet()
+                                        .toList();
                                     final deviceName = uniqueDevices[idx];
-                                    final device = state.pairedDevices.firstWhere(
+                                    final device =
+                                        state.pairedDevices.firstWhere(
                                       (d) => d['name'] == deviceName,
                                     );
-                                    
+
                                     return ListTile(
-                                      title: Text(device['name']!, style: AppFonts.audiowideStyle(color: AppColors.text)),
+                                      title: Text(
+                                        device['name']!,
+                                        style: AppFonts.audiowideStyle(
+                                            color: AppColors.text),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
                                       trailing: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            state.connectedDevices[device['name']] == true
+                                            state.connectedDevices[
+                                                        device['name']] ==
+                                                    true
                                                 ? 'Connected'
-                                                : state.connecting && state.connectingDeviceId == device['id']
+                                                : state.connecting &&
+                                                        state.connectingDeviceId ==
+                                                            device['id']
                                                     ? 'Connecting...'
                                                     : 'Not connected',
                                             style: AppFonts.audiowideStyle(
                                               fontSize: 12,
-                                              color: state.connectedDevices[device['name']] == true
+                                              color: state.connectedDevices[
+                                                          device['name']] ==
+                                                      true
                                                   ? Colors.green
-                                                  : state.connecting && state.connectingDeviceId == device['id']
+                                                  : state.connecting &&
+                                                          state.connectingDeviceId ==
+                                                              device['id']
                                                       ? Colors.orange
                                                       : AppColors.textSecondary,
                                             ),
                                           ),
-                                          if (state.connecting && state.connectingDeviceId == device['id'])
+                                          if (state.connecting &&
+                                              state.connectingDeviceId ==
+                                                  device['id'])
                                             const SizedBox(
                                               width: 48,
                                               height: 48,
@@ -107,7 +127,8 @@ class SearchingDevicePage extends StatelessWidget {
                                                 child: SizedBox(
                                                   width: 24,
                                                   height: 24,
-                                                  child: CircularProgressIndicator(
+                                                  child:
+                                                      CircularProgressIndicator(
                                                     color: Colors.orange,
                                                     strokeWidth: 2,
                                                   ),
@@ -117,36 +138,57 @@ class SearchingDevicePage extends StatelessWidget {
                                           else
                                             IconButton(
                                               icon: Icon(
-                                                state.connectedDevices[device['name']] == true
+                                                state.connectedDevices[
+                                                            device['name']] ==
+                                                        true
                                                     ? Icons.bluetooth_connected
                                                     : Icons.bluetooth,
-                                                color: state.connectedDevices[device['name']] == true
+                                                color: state.connectedDevices[
+                                                            device['name']] ==
+                                                        true
                                                     ? Colors.green
                                                     : AppColors.textSecondary,
                                               ),
-                                              onPressed: state.connecting ? null : () async {
-                                                try {
-                                                  final bleDevice = state.scannedDevices.firstWhere(
-                                                    (d) => d.platformName == device['name'],
-                                                  );
-                                                  context.read<SignUpCubit>().connectToDevice(bleDevice);
-                                                } catch (e) {
-                                                  // Show dialog if device is not found
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) => AlertDialog(
-                                                      title: const Text('Device Not Found'),
-                                                      content: const Text('Please turn on device'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () => Navigator.of(context).pop(),
-                                                          child: const Text('OK'),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }
-                                              },
+                                              onPressed: state.connecting
+                                                  ? null
+                                                  : () async {
+                                                      try {
+                                                        final bleDevice = state
+                                                            .scannedDevices
+                                                            .firstWhere(
+                                                          (d) =>
+                                                              d.platformName ==
+                                                              device['name'],
+                                                        );
+                                                        context
+                                                            .read<SignUpCubit>()
+                                                            .connectToDevice(
+                                                                bleDevice);
+                                                      } catch (e) {
+                                                        // Show dialog if device is not found
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (context) =>
+                                                              AlertDialog(
+                                                            title: const Text(
+                                                                'Device Not Found'),
+                                                            content: const Text(
+                                                                'Please turn on device'),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop(),
+                                                                child:
+                                                                    const Text(
+                                                                        'OK'),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
                                             ),
                                         ],
                                       ),
@@ -156,7 +198,10 @@ class SearchingDevicePage extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                             ],
-                            Text('OTHER DEVICES', style: AppFonts.audiowideStyle(fontSize: 14, color: AppColors.textSecondary)),
+                            Text('OTHER DEVICES',
+                                style: AppFonts.audiowideStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary)),
                             const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(
@@ -166,26 +211,45 @@ class SearchingDevicePage extends StatelessWidget {
                               child: ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                itemCount: state.scannedDevices.where((device) => device.name.isNotEmpty && !state.pairedDevices.contains(device.name)).length,
+                                itemCount: state.scannedDevices
+                                    .where((device) =>
+                                        device.name.isNotEmpty &&
+                                        !state.pairedDevices
+                                            .contains(device.name))
+                                    .length,
                                 itemBuilder: (context, idx) {
-                                  final filteredDevices = state.scannedDevices.where((device) => device.name.isNotEmpty && !state.pairedDevices.contains(device.name)).toList();
+                                  final filteredDevices = state.scannedDevices
+                                      .where((device) =>
+                                          device.name.isNotEmpty &&
+                                          !state.pairedDevices
+                                              .contains(device.name))
+                                      .toList();
                                   final device = filteredDevices[idx];
-                                  final deviceName = device.platformName.isNotEmpty 
-                                      ? device.platformName 
+                                  final deviceName = device
+                                          .platformName.isNotEmpty
+                                      ? device.platformName
                                       : 'Unknown Device (${device.remoteId})';
                                   return ListTile(
-                                    title: Text(deviceName, style: AppFonts.audiowideStyle(color: AppColors.text)),
-                                    trailing: state.connecting && state.connectingDeviceId == device.remoteId.str
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.orange,
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : null,
-                                    onTap: state.connecting ? null : () => context.read<SignUpCubit>().connectToDevice(device),
+                                    title: Text(deviceName,
+                                        style: AppFonts.audiowideStyle(
+                                            color: AppColors.text)),
+                                    trailing: state.connecting &&
+                                            state.connectingDeviceId ==
+                                                device.remoteId.str
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.orange,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : null,
+                                    onTap: state.connecting
+                                        ? null
+                                        : () => context
+                                            .read<SignUpCubit>()
+                                            .connectToDevice(device),
                                   );
                                 },
                               ),
@@ -200,10 +264,11 @@ class SearchingDevicePage extends StatelessWidget {
                       onPressed: () {
                         // Find the first connected device
                         final connectedDevice = state.pairedDevices.firstWhere(
-                          (device) => state.connectedDevices[device['name']] == true,
+                          (device) =>
+                              state.connectedDevices[device['name']] == true,
                           orElse: () => {'name': '', 'id': ''},
                         );
-                        
+
                         if (connectedDevice['name']!.isNotEmpty) {
                           context.go('/dashboard', extra: {
                             'deviceName': connectedDevice['name'],
@@ -224,7 +289,8 @@ class SearchingDevicePage extends StatelessWidget {
                     PrimaryButton(
                       text: 'Cancel',
                       color: AppColors.inputFill,
-                      onPressed: () => context.go('/onboarding/bluetooth-permission'),
+                      onPressed: () =>
+                          context.go('/onboarding/bluetooth-permission'),
                     ),
                   ],
                 );
@@ -235,4 +301,4 @@ class SearchingDevicePage extends StatelessWidget {
       ),
     );
   }
-} 
+}

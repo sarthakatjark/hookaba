@@ -48,7 +48,7 @@ class DrawScreen extends HookWidget {
                   const SizedBox(width: 8),
                   Text(
                     'DRAW',
-                    style: AppFonts.audiowideStyle(
+                    style: AppFonts.dashHorizonStyle(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -59,14 +59,14 @@ class DrawScreen extends HookWidget {
             ),
             // Canvas with grid and border
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
                 color: Colors.black,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFF1E5AFF), width: 1.5),
               ),
-              width: 320,
-              height: 320,
+              width: 340,
+              height: 340,
               child: GestureDetector(
                 key: canvasKey,
                 onPanUpdate: (details) async {
@@ -95,12 +95,12 @@ class DrawScreen extends HookWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 32),
             // Debug button for BLE RTDraw
             
             // Current Color and Color options (replaced with ColorPickerRow)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32),
               child: ColorPickerRow(
                 label: 'Current Color',
                 colors: const [
@@ -121,11 +121,9 @@ class DrawScreen extends HookWidget {
                 showSelectedIndicator: true,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 32),
             // Action buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
+             Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _DrawActionButton(
@@ -150,7 +148,7 @@ class DrawScreen extends HookWidget {
                       onTap: () {/* send logic */}),
                 ],
               ),
-            ),
+            
             const Spacer(),
           ],
         ),
