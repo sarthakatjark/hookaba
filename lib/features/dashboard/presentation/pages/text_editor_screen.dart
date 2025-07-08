@@ -70,11 +70,15 @@ class TextEditorScreen extends HookWidget {
                   height: lineSpacing.value,
                   wordSpacing: wordSpacing.value,
                 ),
-                maxLines: null,
-                decoration: const InputDecoration(
+                maxLines: 8,
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   hintText: 'Enter your text',
-                  hintStyle: TextStyle(color: Colors.grey),
+                  hintStyle: AppFonts.audiowideStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300,
+                  ),
                 ),
               ),
             ),
@@ -190,11 +194,13 @@ class TextEditorScreen extends HookWidget {
                             child: SliderTheme(
                               data: SliderThemeData(
                                 activeTrackColor: Colors.blue,
-                                inactiveTrackColor: Colors.blue.withOpacity(0.3),
+                                inactiveTrackColor:
+                                    Colors.blue.withOpacity(0.3),
                                 thumbColor: Colors.white,
                                 overlayColor: Colors.blue.withOpacity(0.1),
                                 trackHeight: 4,
-                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 16),
+                                thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 16),
                               ),
                               child: Slider(
                                 value: fontSize.value,
@@ -258,7 +264,6 @@ class TextEditorScreen extends HookWidget {
                           style: AppFonts.audiowideStyle(
                             color: Colors.white,
                             fontSize: 14,
-                            
                           )),
                       const Spacer(),
                       Row(
@@ -312,7 +317,6 @@ class TextEditorScreen extends HookWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  
                   // Spacing controls
                   Row(
                     children: [
@@ -460,43 +464,8 @@ class TextEditorScreen extends HookWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-
-                 
+                  const SizedBox(height: 80),
                   // SEND BUTTON
-                  PrimaryButton(
-                    text: 'Send to BLE',
-                    onPressed: () async {
-                      final cubit = context.read<DashboardCubit>();
-                      int colorInt = cubit.colorToBleInt(selectedColor.value);
-                      Map<String, dynamic>? infoAnimate = cubit
-                          .animationTypeToInfoAnimate(selectedAnimation.value);
-                      try {
-                        await cubit.sendTextToBle(
-                          text: text.value,
-                          color: colorInt,
-                          size: fontSize.value.toInt(),
-                          bold: null, // Set to 1 for bold if needed
-                          italic: null, // Set to 1 for italic if needed
-                          spaceFont: wordSpacing.value.toInt(),
-                          spaceLine: (lineSpacing.value * 10).toInt(),
-                          alignHorizontal: "center", // Or get from UI
-                          alignVertical: "center", // Or get from UI
-                          infoAnimate: infoAnimate,
-                          stayingTime: stayingTime.value,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Text sent to BLE display!')),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to send: $e')),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -507,6 +476,41 @@ class TextEditorScreen extends HookWidget {
         currentIndex: selectedIndex.value,
         onTap: (index) => selectedIndex.value = index,
       ),
+      floatingActionButton: SizedBox(
+        width: MediaQuery.of(context).size.width - 32,
+        child: PrimaryButton(
+          text: 'Send to BLE',
+          onPressed: () async {
+            final cubit = context.read<DashboardCubit>();
+            int colorInt = cubit.colorToBleInt(selectedColor.value);
+            Map<String, dynamic>? infoAnimate =
+                cubit.animationTypeToInfoAnimate(selectedAnimation.value);
+            try {
+              await cubit.sendTextToBle(
+                text: text.value,
+                color: colorInt,
+                size: fontSize.value.toInt(),
+                bold: null, // Set to 1 for bold if needed
+                italic: null, // Set to 1 for italic if needed
+                spaceFont: wordSpacing.value.toInt(),
+                spaceLine: (lineSpacing.value * 10).toInt(),
+                alignHorizontal: "center", // Or get from UI
+                alignVertical: "center", // Or get from UI
+                infoAnimate: infoAnimate,
+                stayingTime: stayingTime.value,
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Text sent to BLE display!')),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to send: $e')),
+              );
+            }
+          },
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

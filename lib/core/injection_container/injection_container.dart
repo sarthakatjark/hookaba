@@ -7,6 +7,7 @@ import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hookaba/features/onboarding/data/datasources/sign_up_repository_impl.dart';
 import 'package:hookaba/features/onboarding/presentation/cubit/sign_up_cubit.dart';
+import 'package:hookaba/features/split_screen/data/datasources/split_screen_repository_impl.dart';
 
 final sl = GetIt.instance;
 
@@ -18,7 +19,7 @@ Future<void> init() async {
 
   // Router
   sl.registerLazySingleton(() => AppRouter());
-  
+
   // Services
   sl.registerLazySingleton(() => BLEService());
 
@@ -29,24 +30,27 @@ Future<void> init() async {
 
   // Repositories
   sl.registerLazySingleton(() => SignUpRepositoryImpl(
-    bleService: sl<BLEService>(),
-    pairedBox: sl<Box<String>>(),
-  ));
+        bleService: sl<BLEService>(),
+        pairedBox: sl<Box<String>>(),
+      ));
+
+  // SplitScreenRepositoryImpl registration
+  sl.registerLazySingleton(() => SplitScreenRepositoryImpl());
 
   // Cubits
   sl.registerFactory(() => SignUpCubit(
-    signUpRepository: sl<SignUpRepositoryImpl>(),
-  ));
+        signUpRepository: sl<SignUpRepositoryImpl>(),
+      ));
   sl.registerLazySingleton(() => DashboardCubit(
-    bleService: sl<BLEService>(),
-    dashboardRepository: DashboardRepositoryImpl(
-      bleService: sl<BLEService>(),
-      jsBridgeService: sl<JsBridgeService>(),
-    ),
-    jsBridgeService: sl<JsBridgeService>(),
-  ));
+        bleService: sl<BLEService>(),
+        dashboardRepository: DashboardRepositoryImpl(
+          bleService: sl<BLEService>(),
+          jsBridgeService: sl<JsBridgeService>(),
+        ),
+        jsBridgeService: sl<JsBridgeService>(),
+      ));
 }
 
 // Helper extension to find a device by name or ID
 // This is a simple implementation and might need adjustments
-// based on how device names and IDs are handled in your app. 
+// based on how device names and IDs are handled in your app.

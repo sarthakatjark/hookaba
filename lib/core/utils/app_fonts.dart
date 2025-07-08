@@ -9,7 +9,8 @@ class AppFonts {
     double fontSize = 24,
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
-  }) => TextStyle(
+  }) =>
+      TextStyle(
         fontFamily: dashHorizon,
         fontSize: fontSize,
         fontWeight: fontWeight,
@@ -20,7 +21,8 @@ class AppFonts {
     double fontSize = 16,
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
-  }) => TextStyle(
+  }) =>
+      TextStyle(
         fontFamily: audiowide,
         fontSize: fontSize,
         fontWeight: fontWeight,
@@ -33,7 +35,8 @@ class AppFonts {
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
     double? letterSpacing,
-  }) => GoogleFonts.orbitron(
+  }) =>
+      GoogleFonts.orbitron(
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: color,
@@ -46,10 +49,11 @@ class AppFonts {
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
     double? letterSpacing,
-  }) => GoogleFonts.roboto(
+  }) =>
+      GoogleFonts.roboto(
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: color,
         letterSpacing: letterSpacing,
       );
-} 
+}

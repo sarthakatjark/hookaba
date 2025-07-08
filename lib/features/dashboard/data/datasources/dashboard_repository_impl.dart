@@ -2,11 +2,14 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/enum.dart' show AnimationType;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart' as logger;
 
@@ -20,37 +23,28 @@ class DashboardRepositoryImpl {
     required this.jsBridgeService,
   });
 
-  Future<void> sendJsonCommand(BluetoothDevice device, Map<String, dynamic> jsonCmd) async {
-    final services = await device.discoverServices();
-    BluetoothCharacteristic? writeChar;
-    for (var service in services) {
-      for (var char in service.characteristics) {
-        final charUuid = char.uuid.toString().toLowerCase();
-        if (charUuid.contains("fff2") || charUuid.contains("ff02")) {
-          writeChar = char;
-          break;
-        }
-      }
-      if (writeChar != null) break;
-    }
-    if (writeChar == null) throw Exception('Write characteristic not found');
-    final jsonStr = jsonEncode(jsonCmd);
-    final bytes = utf8.encode(jsonStr);
-    final packet = Uint8List(2 + bytes.length)
-      ..[0] = bytes.length & 0xFF
-      ..[1] = (bytes.length >> 8) & 0xFF
-      ..setRange(2, 2 + bytes.length, bytes);
-    await writeChar.write(packet, withoutResponse: false);
-  }
-
-  Future<void> sendPowerOffSequence(BluetoothDevice device) async {
+  Future<void> sendPowerSequence({required int power, required int sno}) async {
     final cmd = {
       "cmd": {
-        "power": {"type": 0}
+        "power": {"type": power},
       },
-      "sno": DateTime.now().millisecondsSinceEpoch % 1000
+      "sno": sno,
     };
-    await sendJsonCommand(device, cmd);
+    await jsBridgeService.sendJsonCommand(cmd);
+  }
+
+  /// Sends a brightness command to the BLE device via JS bridge (fixed mode)
+  Future<void> sendBrightness(int brightnessValue) async {
+    final cmd = {
+      "cmd": {
+        "light": {
+          "type": 0,
+          "value_fix": brightnessValue.clamp(0, 15),
+        },
+      },
+      "sno": DateTime.now().millisecondsSinceEpoch % 65535,
+    };
+    await jsBridgeService.sendJsonCommand(cmd);
   }
 
   Future<void> sendImageOrGifViaJsBridge(Map<String, dynamic> jsonCmd,
@@ -74,7 +68,8 @@ class DashboardRepositoryImpl {
         (String.fromCharCodes(raw.sublist(0, 6)) == 'GIF87a' ||
             String.fromCharCodes(raw.sublist(0, 6)) == 'GIF89a');
     final idPro = DateTime.now().millisecondsSinceEpoch % 50000;
-    final randomBytes = Uint8List.fromList(List.generate(20, (_) => Random().nextInt(256)));
+    final randomBytes =
+        Uint8List.fromList(List.generate(20, (_) => Random().nextInt(256)));
     final idRes = base64Encode(randomBytes);
     final sno = DateTime.now().millisecondsSinceEpoch % 65535;
     if (isGif) {
@@ -163,9 +158,11 @@ class DashboardRepositoryImpl {
     }
   }
 
-  Future<void> sendBlankCanvas(BluetoothDevice device, {int width = 64, int height = 64}) async {
+  Future<void> sendBlankCanvas(BluetoothDevice device,
+      {int width = 64, int height = 64}) async {
     final idPro = DateTime.now().millisecondsSinceEpoch % 50000;
-    final randomBytes = Uint8List.fromList(List.generate(20, (_) => Random().nextInt(256)));
+    final randomBytes =
+        Uint8List.fromList(List.generate(20, (_) => Random().nextInt(256)));
     final idRes = base64Encode(randomBytes);
     final sno = DateTime.now().millisecondsSinceEpoch % 65535;
     final blank = img.Image(width: width, height: height);
@@ -198,7 +195,8 @@ class DashboardRepositoryImpl {
     await sendImageOrGifViaJsBridge(jsonCmd, base64Image: base64Image);
   }
 
-  Future<void> sendTextToBle(BluetoothDevice device, {
+  Future<void> sendTextToBle(
+    BluetoothDevice device, {
     required String text,
     required int color,
     required int size,
@@ -242,7 +240,8 @@ class DashboardRepositoryImpl {
                 if (italic != null) "italic": italic,
                 if (spaceFont != null) "space_font": spaceFont,
                 if (spaceLine != null) "space_line": spaceLine,
-                if (alignHorizontal != null) "align_horizontal": alignHorizontal,
+                if (alignHorizontal != null)
+                  "align_horizontal": alignHorizontal,
                 if (alignVertical != null) "align_vertical": alignVertical,
                 if (infoAnimate != null) "info_animate": infoAnimate,
               }
@@ -256,57 +255,23 @@ class DashboardRepositoryImpl {
     await jsBridgeService.sendText(jsonCmd);
   }
 
-  Future<void> sendBinaryToBle(BluetoothDevice device, Uint8List data, int idPro) async {
-    final services = await device.discoverServices();
-    BluetoothCharacteristic? writeChar;
-    for (var service in services) {
-      for (var char in service.characteristics) {
-        final charUuid = char.uuid.toString().toLowerCase();
-        if (charUuid.contains("fff2") || charUuid.contains("ff02")) {
-          writeChar = char;
-          break;
-        }
-      }
-      if (writeChar != null) break;
-    }
-    if (writeChar == null) throw Exception('Write characteristic not found for binary');
-    final header = Uint8List(4);
-    ByteData.view(header.buffer).setUint32(0, data.length, Endian.little);
-    await writeChar.write(header, withoutResponse: true);
-    await Future.delayed(const Duration(milliseconds: 50));
-    const mtu = 180;
-    for (int i = 0; i < data.length; i += mtu) {
-      final chunk = data.sublist(i, (i + mtu > data.length) ? data.length : i + mtu);
-      await writeChar.write(chunk, withoutResponse: true);
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-    final cmd = {
-      "cmd": {
-        "pgm_play": {
-          "model": 0,
-          "index": 0,
-          "ids_pro": [idPro],
-        }
-      },
-      "sno": DateTime.now().millisecondsSinceEpoch % 65535,
-    };
-    await sendJsonCommand(device, cmd);
-  }
-
   Future<void> getProgramGroup(BluetoothDevice device) async {
     final cmd = {
-      "cmd": { "get": "pgm_play" },
+      "cmd": {"get": "pgm_play"},
       "sno": DateTime.now().millisecondsSinceEpoch % 1000,
     };
-    await sendJsonCommand(device, cmd);
+    //await sendJsonCommand(device, cmd);
+    await jsBridgeService.sendJsonCommand(cmd);
   }
 
-  Future<void> getProgramResourceIds(BluetoothDevice device, List<int> programIds) async {
+  Future<void> getProgramResourceIds(
+      BluetoothDevice device, List<int> programIds) async {
     final cmd = {
-      "cmd": { "get": "pgm_key", "ids_pro": programIds },
+      "cmd": {"get": "pgm_key", "ids_pro": programIds},
       "sno": DateTime.now().millisecondsSinceEpoch % 1000,
     };
-    await sendJsonCommand(device, cmd);
+    //await sendJsonCommand(device, cmd);
+    await jsBridgeService.sendJsonCommand(cmd);
   }
 
   Future<void> sendRTDrawPoint({
@@ -408,4 +373,51 @@ class DashboardRepositoryImpl {
         return {"model_continue": "left", "speed": 10, "size_interval": 50};
     }
   }
-} 
+
+  /// Picks an image, crops to box, compresses, and returns the processed XFile (or null if cancelled)
+  Future<XFile?> pickAndProcessImage(BuildContext context) async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery);
+    if (file == null) return null;
+    // Check if GIF
+    final isGif = file.name.toLowerCase().endsWith('.gif');
+    XFile? finalFile = file;
+    if (!isGif) {
+      // Crop image to box shape
+      final cropped = await ImageCropper().cropImage(
+        sourcePath: file.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+      if (cropped != null) {
+        // Compress image
+        final compressed = await FlutterImageCompress.compressAndGetFile(
+          cropped.path,
+          '${cropped.path}_compressed.jpg',
+          quality: 80,
+        );
+        if (compressed != null) {
+          finalFile = XFile(compressed.path);
+        } else {
+          finalFile = XFile(cropped.path);
+        }
+      } else {
+        // User cancelled cropping
+        return null;
+      }
+    }
+    return finalFile;
+  }
+}

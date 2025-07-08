@@ -1,11 +1,5 @@
 part of 'dashboard_cubit.dart';
 
-enum DashboardStatus {
-  initial,
-  loading,
-  success,
-  error,
-}
 
 class DashboardState extends Equatable {
   final DashboardStatus status;

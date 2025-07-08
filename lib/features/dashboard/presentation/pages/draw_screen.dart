@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart'
@@ -211,15 +212,43 @@ class _DrawActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _DrawActionButton(
-      {required this.icon, required this.label, required this.onTap});
+  const _DrawActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  String? _svgAssetForLabel(String label) {
+    switch (label.toLowerCase()) {
+      case 'clean':
+        return 'assets/images/clean.svg';
+      case 'erase':
+        return 'assets/images/eraser.svg';
+      case 'preserve':
+        return 'assets/images/cloud-upload.svg';
+      case 'send':
+        return 'assets/images/folder.svg';
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final svgAsset = _svgAssetForLabel(label);
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, color: Colors.white, size: 28),
+          if (svgAsset != null)
+            SvgPicture.asset(
+              svgAsset,
+              width: 28,
+              height: 28,
+              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            )
+          else
+            Icon(icon, color: Colors.white, size: 28),
           const SizedBox(height: 4),
           Text(
             label,

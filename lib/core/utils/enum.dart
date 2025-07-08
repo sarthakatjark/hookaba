@@ -9,3 +9,10 @@ enum AnimationType {
   flicker,
   continueLeftShift,
 }
+
+enum DashboardStatus {
+  initial,
+  loading,
+  success,
+  error,
+}

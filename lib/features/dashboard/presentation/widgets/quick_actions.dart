@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hookaba/core/utils/enum.dart' show DashboardStatus;
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hookaba/features/dashboard/presentation/widgets/action_card.dart';
 import 'package:hookaba/features/dashboard/presentation/widgets/show_upload_modal.dart';
 
 class QuickActions extends StatelessWidget {
-  final Future<void> Function(BluetoothDevice) sendCommand;
-
   const QuickActions({
     super.key,
-    required this.sendCommand,
   });
 
   @override
@@ -20,7 +17,7 @@ class QuickActions extends StatelessWidget {
       builder: (dashboardContext, state) {
         final cubit = dashboardContext.read<DashboardCubit>();
         final canUpload = cubit.isDeviceConnected;
-        final connectedDevice = cubit.connectedDevice;
+        //final connectedDevice = cubit.connectedDevice;
 
         // Show device response if available
         if (state.deviceResponse != null) {
@@ -61,11 +58,7 @@ class QuickActions extends StatelessWidget {
                                     return;
                                   }
                                   showUploadModal(
-                                    dashboardContext,
-                                    device,
-                                    sendCommand,
-                                    cubit
-                                  );
+                                      dashboardContext, device, cubit);
                                 }
                               : null,
                           isLoading: state.status == DashboardStatus.loading,

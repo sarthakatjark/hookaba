@@ -4,16 +4,14 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hookaba/core/common_widgets/primary_button.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:image_picker/image_picker.dart';
 
-void showUploadModal(
-    BuildContext context,
-    BluetoothDevice device,
-    Future<void> Function(BluetoothDevice) sendPowerOffSequence,
+void showUploadModal(BuildContext context, BluetoothDevice device,
     DashboardCubit dashboardCubit) {
   final ValueNotifier<XFile?> pickedFile = ValueNotifier<XFile?>(null);
   final ValueNotifier<bool> isUploading = ValueNotifier<bool>(false);
@@ -83,7 +81,10 @@ void showUploadModal(
                           ],
                         ),
                         const SizedBox(height: 8),
-                        LinearProgressIndicator(value: state.uploadProgress, color: Colors.blueAccent,),
+                        LinearProgressIndicator(
+                          value: state.uploadProgress,
+                          color: Colors.blueAccent,
+                        ),
                       ],
                     ),
                   )
@@ -117,10 +118,13 @@ void showUploadModal(
                                 );
                               }
                             }
-                            return const Padding(
-                              padding: EdgeInsets.only(bottom: 12.0),
-                              child: Icon(Icons.folder,
-                                  size: 48, color: Colors.blueAccent),
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: SvgPicture.asset(
+                                'assets/images/image-upload.svg',
+                                width: 48,
+                                height: 48,
+                              ),
                             );
                           },
                         ),
@@ -142,14 +146,15 @@ void showUploadModal(
                           valueListenable: pickedFile,
                           builder: (context, file, _) => ElevatedButton(
                             onPressed: () async {
-                              final picker = ImagePicker();
-                              final file = await picker.pickImage(
-                                  source: ImageSource.gallery);
-                              if (file != null) {
-                                pickedFile.value = file;
+                              final cubit = context.read<DashboardCubit>();
+                              final processedFile =
+                                  await cubit.pickAndProcessImage(context);
+                              if (processedFile != null) {
+                                pickedFile.value = processedFile;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Selected: ${file.name}'),
+                                  const SnackBar(
+                                    content: Text(
+                                        'Selected: 24{processedFile.name}'),
                                   ),
                                 );
                               }

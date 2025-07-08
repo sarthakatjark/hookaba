@@ -1,10 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/core/utils/enum.dart' show AnimationType;
 
 class AnimationPickerModal extends StatelessWidget {
   final void Function(AnimationType) onSelected;
   const AnimationPickerModal({Key? key, required this.onSelected})
       : super(key: key);
+
+  String? _svgAssetForType(AnimationType type) {
+    switch (type) {
+      case AnimationType.showNow:
+        return 'assets/images/icons_eye.svg';
+      case AnimationType.shiftLeft:
+        return 'assets/images/arrow-left.svg';
+      case AnimationType.shiftRight:
+        return 'assets/images/arrow-right.svg';
+      case AnimationType.moveUp:
+        return 'assets/images/arrow-up.svg';
+      case AnimationType.moveDown:
+        return 'assets/images/arrow-down.svg';
+      case AnimationType.snow:
+        return 'assets/images/snow.svg';
+      case AnimationType.bubble:
+        return 'assets/images/bubble.svg';
+      case AnimationType.flicker:
+        return 'assets/images/flicker.svg';
+      case AnimationType.continueLeftShift:
+        return 'assets/images/pointing-left.svg';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +66,12 @@ class AnimationPickerModal extends StatelessWidget {
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          const Text('ANIMATION',
-              style: TextStyle(
+          Text('ANIMATION',
+              style: AppFonts.dashHorizonStyle(
                 color: Colors.white,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+                // letterSpacing: 2, // dashHorizonStyle may not support this, remove if not needed
               )),
           const SizedBox(height: 24),
           GridView.count(
@@ -64,10 +89,18 @@ class AnimationPickerModal extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(item.icon, color: Colors.white, size: 36),
+                          if (_svgAssetForType(item.type) != null)
+                            SvgPicture.asset(
+                              _svgAssetForType(item.type)!,
+                              width: 36,
+                              height: 36,
+                              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                            )
+                          else
+                            Icon(item.icon, color: Colors.white, size: 36),
                           const SizedBox(height: 8),
                           Text(item.label,
-                              style: const TextStyle(
+                              style: AppFonts.audiowideStyle(
                                 color: Colors.white,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,

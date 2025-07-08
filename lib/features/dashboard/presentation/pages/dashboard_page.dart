@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hookaba/core/common_widgets/primary_bottom_nav_bar.dart';
@@ -54,10 +53,6 @@ class DashboardPage extends HookWidget {
       return () => timer.cancel();
     }, []);
 
-    Future<void> sendCommand(BluetoothDevice device) async {
-      // TODO: Move the full implementation here from the old _quickActions method if needed
-    }
-
     return BlocProvider.value(
       value: sl<DashboardCubit>(),
       child: Scaffold(
@@ -70,7 +65,10 @@ class DashboardPage extends HookWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const DashboardHeader(),
+                      BlocProvider.value(
+                        value: sl<DashboardCubit>(),
+                        child: const DashboardHeader(),
+                      ),
                       const SizedBox(height: 16),
                       SizedBox(
                         height: 180,
@@ -92,9 +90,7 @@ class DashboardPage extends HookWidget {
                       const SizedBox(height: 16),
                       Text("QUICK ACTIONS", style: _labelStyle()),
                       const SizedBox(height: 8),
-                      QuickActions(
-                        sendCommand: sendCommand,
-                      ),
+                      const QuickActions(),
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -117,7 +113,10 @@ class DashboardPage extends HookWidget {
                       const SizedBox(height: 20),
                       Text("BRIGHTNESS", style: _labelStyle()),
                       const SizedBox(height: 8),
-                      const BrightnessSlider(),
+                      BlocProvider.value(
+                        value: sl<DashboardCubit>(),
+                        child: const BrightnessSlider(),
+                      ),
                       const SizedBox(height: 20),
                       Text("SPLIT SCREEN FEATURE", style: _labelStyle()),
                       const SizedBox(height: 8),

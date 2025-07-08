@@ -1,8 +1,9 @@
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hookaba/core/common_widgets/primary_bottom_nav_bar.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
+
+import '../widgets/split_template.dart';
 
 class SplitScreenPage extends StatelessWidget {
   const SplitScreenPage({Key? key}) : super(key: key);
@@ -46,30 +47,31 @@ class SplitScreenPage extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 20,
                 crossAxisSpacing: 20,
+                childAspectRatio: 0.8,
                 children: [
-                  _TemplateCard(
+                  TemplateCard(
                     label: 'Template 1',
                     onTap: () => context.go(
                         '/dashboard/split-screen/preview?templateIndex=0&ratio=0.5'),
-                    template: _SplitTemplate.template1(),
+                    template: SplitTemplate.template1(),
                   ),
-                  _TemplateCard(
+                  TemplateCard(
                     label: 'Template 2',
                     onTap: () => context.go(
                         '/dashboard/split-screen/preview?templateIndex=1&ratio=0.25'),
-                    template: _SplitTemplate.template2(),
+                    template: SplitTemplate.template2(),
                   ),
-                  _TemplateCard(
+                  TemplateCard(
                     label: 'Template 3',
                     onTap: () => context.go(
                         '/dashboard/split-screen/preview?templateIndex=2&ratio=0.75'),
-                    template: _SplitTemplate.template3(),
+                    template: SplitTemplate.template3(),
                   ),
-                  _TemplateCard(
+                  TemplateCard(
                     label: 'Custom Template',
                     onTap: () => context
                         .go('/dashboard/split-screen/preview?templateIndex=3'),
-                    template: _SplitTemplate.custom(),
+                    template: SplitTemplate.custom(),
                   ),
                 ],
               ),
@@ -80,121 +82,6 @@ class SplitScreenPage extends StatelessWidget {
       bottomNavigationBar: PrimaryBottomNavBar(
         currentIndex: 0,
         onTap: (_) {},
-      ),
-    );
-  }
-}
-
-class _SplitTemplate {
-  final List<Rect> sections;
-
-  const _SplitTemplate({
-    required this.sections,
-  });
-
-  factory _SplitTemplate.template1() {
-    return const _SplitTemplate(
-      sections: [
-        Rect.fromLTRB(0, 0, 1, 0.2),
-        Rect.fromLTRB(0, 0.5, 1, 1),
-        
-      ],
-    );
-  }
-
-  factory _SplitTemplate.template2() {
-    return const _SplitTemplate(
-      sections: [
-        Rect.fromLTRB(0, 0, 1, 0.5),
-        //Rect.fromLTRB(0, 0.5, 1, 0.75),
-        Rect.fromLTRB(0, 0.75, 1, 1),
-      ],
-    );
-  }
-
-  factory _SplitTemplate.template3() {
-    return const _SplitTemplate(
-      sections: [
-        Rect.fromLTRB(0, 0, 1, 0.5),
-        Rect.fromLTRB(0, 0.5, 1, 1),
-      ],
-    );
-  }
-
-  factory _SplitTemplate.custom() {
-    return const _SplitTemplate(
-      sections: [
-        Rect.fromLTRB(0, 0, 1, 1),
-      ],
-    );
-  }
-}
-
-class _TemplateCard extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final _SplitTemplate template;
-
-  const _TemplateCard({
-    required this.label,
-    required this.onTap,
-    required this.template,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF112244),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Stack(
-                  children: template.sections.map((section) {
-                    return Align(
-                      alignment: Alignment(
-                        -1.0 +
-                            section.left * 2 +
-                            (section.right - section.left),
-                        -1.0 + section.top * 2 + (section.bottom - section.top),
-                      ),
-                      child: FractionallySizedBox(
-                        widthFactor: section.right - section.left,
-                        heightFactor: section.bottom - section.top,
-                        alignment: Alignment.topLeft,
-                        child: DottedBorder(
-                          options: RoundedRectDottedBorderOptions(
-                            color: Colors.white.withOpacity(0.3),
-                            strokeWidth: 1,
-                            radius: const Radius.circular(8),
-                            dashPattern: [5, 5],
-                          ),
-                          child: Container(),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                label,
-                style:
-                    AppFonts.audiowideStyle(color: Colors.white, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

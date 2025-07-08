@@ -58,7 +58,6 @@ class JsBridgeService {
     function sendImageTLV(obj) {
       try {
         const res = [];
-
         if (obj.res_base64) {
           const bin = atob(obj.res_base64);
           const arr = new Uint8Array(bin.length);
@@ -89,15 +88,25 @@ class JsBridgeService {
     }
 
     function sendRTDrawTLV(obj) {
-  try {
-    const tlv = parse_data(obj, []);
-    debugFlutter("sendRTDrawTLV: TLV generated, length: " + (tlv?.length ?? 'null'));
-    postTLVResult(obj, tlv);
-  } catch (e) {
-    postError(obj, e);
-  }
-}
+      try {
+        const tlv = parse_data(obj, []);
+        debugFlutter("sendRTDrawTLV: TLV generated, length: " + (tlv?.length ?? 'null'));
+        postTLVResult(obj, tlv);
+      } catch (e) {
+        postError(obj, e);
+      }
+    }
 
+    function sendJsonTLV(obj) {
+      try {
+        debugFlutter("sendJsonTLV: Preparing to generate TLV for object: " + JSON.stringify(obj));
+        const tlv = parse_data(obj, []);
+        debugFlutter("sendJsonTLV: TLV generated, length: " + (tlv?.length ?? 'null'));
+        postTLVResult(obj, tlv);
+      } catch (e) {
+        postError(obj, e);
+      }
+    }
 
     function postTLVResult(obj, tlv) {
       if (tlv && tlv.length > 0) {
@@ -193,7 +202,15 @@ class JsBridgeService {
   Future<void> sendRTDraw(Map<String, dynamic> jsonCmd) async {
     final jsonStr = jsonEncode(jsonCmd);
     await _controller.runJavaScript("sendRTDrawTLV($jsonStr);");
-  }  
+  }
+
+  /// Call this to send a generic JSON command (e.g., power on/off, playback, etc.)
+  /// to JS for TLV encoding. This uses the sendJsonTLV JS function, which must be
+  /// present in the JS bridge. The TLV will be sent back via TLVChannel.
+  Future<void> sendJsonCommand(Map<String, dynamic> jsonCmd) async {
+    final jsonStr = jsonEncode(jsonCmd);
+    await _controller.runJavaScript("sendJsonTLV($jsonStr);");
+  }
 
   void dispose() {
     _tlvStreamController.close();

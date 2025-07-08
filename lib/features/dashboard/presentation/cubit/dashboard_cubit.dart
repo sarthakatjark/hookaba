@@ -6,8 +6,10 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
-import 'package:hookaba/core/utils/enum.dart' show AnimationType;
+import 'package:hookaba/core/utils/enum.dart'
+    show AnimationType, DashboardStatus;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
 import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
 import 'package:image_picker/image_picker.dart';
@@ -160,9 +162,10 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   /// Sends a JSON command to the BLE device
-  Future<void> sendJsonCommand(Map<String, dynamic> jsonCmd) async {
+
+  /// Sends a power-off command to the BLE device
+  Future<void> sendPowerSequence({required int power, required int sno}) async {
     if (_connectedDevice == null) {
-      _logger.e('❌ No device connected. Cannot send command.');
       emit(state.copyWith(
         status: DashboardStatus.error,
         errorMessage: 'No device connected',
@@ -170,21 +173,18 @@ class DashboardCubit extends Cubit<DashboardState> {
       return;
     }
     try {
-      _logger.i('📤 Sending JSON command: $jsonCmd');
-      await dashboardRepository.sendJsonCommand(_connectedDevice!, jsonCmd);
-      _logger.i('✅ JSON command sent to BLE device.');
+      await dashboardRepository.sendPowerSequence(power: power, sno: sno);
       emit(state.copyWith(status: DashboardStatus.success));
     } catch (e) {
-      _logger.e('❌ Failed to send command: $e');
       emit(state.copyWith(
         status: DashboardStatus.error,
-        errorMessage: 'Failed to send command: $e',
+        errorMessage: 'Failed to send power command: $e',
       ));
     }
   }
 
-  /// Sends a power-off command to the BLE device
-  Future<void> sendPowerOffSequence() async {
+  /// Sends a brightness command to the BLE device via JS bridge
+  Future<void> sendBrightness(int brightnessValue) async {
     if (_connectedDevice == null) {
       emit(state.copyWith(
         status: DashboardStatus.error,
@@ -193,12 +193,12 @@ class DashboardCubit extends Cubit<DashboardState> {
       return;
     }
     try {
-      await dashboardRepository.sendPowerOffSequence(_connectedDevice!);
+      await dashboardRepository.sendBrightness(brightnessValue);
       emit(state.copyWith(status: DashboardStatus.success));
     } catch (e) {
       emit(state.copyWith(
         status: DashboardStatus.error,
-        errorMessage: 'Failed to send power off: $e',
+        errorMessage: 'Failed to send brightness command: $e',
       ));
     }
   }
@@ -348,26 +348,6 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  /// Sends raw binary data (e.g. BMP or GIF) to BLE in 180-byte chunks
-  Future<void> sendBinaryToBle(Uint8List data, int idPro) async {
-    if (_connectedDevice == null) {
-      emit(state.copyWith(
-        status: DashboardStatus.error,
-        errorMessage: 'No device connected. Cannot send binary.',
-      ));
-      return;
-    }
-    try {
-      await dashboardRepository.sendBinaryToBle(_connectedDevice!, data, idPro);
-      emit(state.copyWith(status: DashboardStatus.success));
-    } catch (e) {
-      emit(state.copyWith(
-        status: DashboardStatus.error,
-        errorMessage: 'Failed to send binary: $e',
-      ));
-    }
-  }
-
   // Helper to map Flutter Color to BLE color int
   int colorToBleInt(Color color) {
     if (color == Colors.red) return 255;
@@ -421,4 +401,9 @@ class DashboardCubit extends Cubit<DashboardState> {
       ));
     }
   }
-} 
+
+  /// Picks an image, crops to box, compresses, and returns the processed XFile (or null if cancelled)
+  Future<XFile?> pickAndProcessImage(BuildContext context) async {
+    return await dashboardRepository.pickAndProcessImage(context);
+  }
+}
