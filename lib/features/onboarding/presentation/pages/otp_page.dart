@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hookaba/core/extensions/responsive_ext.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../widgets/onboarding_app_bar.dart';
 
@@ -125,45 +128,53 @@ class OtpPage extends HookWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(6, (index) {
-                  return Container(
-                    width: 45,
-                    height: 48,
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.primary, width: 2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: TextField(
-                      controller: controllers[index],
-                      focusNode: focusNodes[index],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      maxLength: 1,
-                      style: AppFonts.audiowideStyle(
-                        fontSize: 22,
-                        color: AppColors.text,
+                  final boxWidth = context.getWidth(
+                    ratioMobile: 0.12, // ~12% of screen width per box on mobile
+                    ratioTablet: 0.08,
+                    ratioDesktop: 0.06,
+                  );
+                  final boxMargin = context.isMobile ? 3.0 : 6.0;
+                  return Flexible(
+                    child: Container(
+                      width: boxWidth,
+                      height: 48,
+                      margin: EdgeInsets.symmetric(horizontal: boxMargin),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.primary, width: 2),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      decoration: const InputDecoration(
-                        counterText: '',
-                        border: InputBorder.none,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          // Move to next field
-                          if (index < 5) {
-                            focusNodes[index + 1].requestFocus();
-                          } else {
-                            focusNodes[index].unfocus();
-                            onOtpComplete();
+                      child: TextField(
+                        controller: controllers[index],
+                        focusNode: focusNodes[index],
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        style: AppFonts.audiowideStyle(
+                          fontSize: 22,
+                          color: AppColors.text,
+                        ),
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (value) {
+                          if (value.isNotEmpty) {
+                            // Move to next field
+                            if (index < 5) {
+                              focusNodes[index + 1].requestFocus();
+                            } else {
+                              focusNodes[index].unfocus();
+                              onOtpComplete();
+                            }
+                          } else if (value.isEmpty && index > 0) {
+                            // Move to previous field on backspace
+                            focusNodes[index - 1].requestFocus();
                           }
-                        } else if (value.isEmpty && index > 0) {
-                          // Move to previous field on backspace
-                          focusNodes[index - 1].requestFocus();
-                        }
-                      },
+                        },
+                      ),
                     ),
                   );
                 }),
@@ -227,41 +238,48 @@ class OtpPage extends HookWidget {
               ),
               const Spacer(),
               // Terms and Privacy links at bottom
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      // Add navigation to Terms page
-                    },
-                    child: Text(
-                      'Terms & Conditions',
-                      style: AppFonts.audiowideStyle(
-                        fontSize: 14,
-                        color: AppColors.primary,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Terms & Conditions',
+                        style: AppFonts.audiowideStyle(
+                          fontSize: 14,
+                          color: AppColors.primary,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () async {
+                            final url = Uri.parse('https://hookaba.com/pages/terms-of-service');
+                            await launchUrl(url);
+                          },
                       ),
-                    ),
-                  ),
-                  Text(
-                    ' • ',
-                    style: AppFonts.audiowideStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // Add navigation to Privacy Policy page
-                    },
-                    child: Text(
-                      'Privacy Policy',
-                      style: AppFonts.audiowideStyle(
-                        fontSize: 14,
-                        color: AppColors.primary,
+                      TextSpan(
+                        text: ' • ',
+                        style: AppFonts.audiowideStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
                       ),
-                    ),
+                      TextSpan(
+                        text: 'Privacy Policy',
+                        style: AppFonts.audiowideStyle(
+                          fontSize: 14,
+                          color: AppColors.primary,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () async {
+                            final url = Uri.parse('https://hookaba.com/pages/privacy-policy');
+                            await launchUrl(url);
+                          },
+                      ),
+                    ],
                   ),
-                ],
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                ),
               ),
               const SizedBox(height: 8),
             ],

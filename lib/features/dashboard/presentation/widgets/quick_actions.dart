@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/utils/enum.dart' show DashboardStatus;
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hookaba/features/dashboard/presentation/widgets/action_card.dart';
@@ -22,11 +23,10 @@ class QuickActions extends StatelessWidget {
         // Show device response if available
         if (state.deviceResponse != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Device response: ${state.deviceResponse}'),
-                backgroundColor: Colors.blue,
-              ),
+            showPrimarySnackbar(
+              context,
+              'Device response: ${state.deviceResponse}',
+              //backgroundColor: Colors.blue,
             );
           });
         }
@@ -48,12 +48,10 @@ class QuickActions extends StatelessWidget {
                               ? () async {
                                   final device = cubit.connectedDevice;
                                   if (device == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Device is not connected. Please reconnect.'),
-                                        backgroundColor: Colors.red,
-                                      ),
+                                    showPrimarySnackbar(
+                                      context,
+                                      'Device is not connected. Please reconnect.',
+                                      //backgroundColor: Colors.red,
                                     );
                                     return;
                                   }

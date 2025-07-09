@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hookaba/core/common_widgets/primary_bottom_nav_bar.dart';
 import 'package:hookaba/core/common_widgets/primary_button.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/core/utils/enum.dart' show AnimationType;
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -499,13 +500,9 @@ class TextEditorScreen extends HookWidget {
                 infoAnimate: infoAnimate,
                 stayingTime: stayingTime.value,
               );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Text sent to BLE display!')),
-              );
+              showPrimarySnackbar(context, 'Text sent to BLE display!');
             } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to send: $e')),
-              );
+              showPrimarySnackbar(context, 'Failed to send: $e');
             }
           },
         ),

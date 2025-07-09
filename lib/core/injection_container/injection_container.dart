@@ -21,7 +21,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AppRouter());
 
   // Services
-  sl.registerLazySingleton(() => BLEService());
+  sl.registerLazySingleton(() => BLEService(sl<JsBridgeService>()));
 
   // Initialize and register JsBridgeService
   final jsBridgeService = JsBridgeService();

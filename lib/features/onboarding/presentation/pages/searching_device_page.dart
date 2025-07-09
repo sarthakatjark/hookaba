@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hookaba/core/common_widgets/primary_button.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/injection_container/injection_container.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
@@ -276,12 +277,8 @@ class SearchingDevicePage extends StatelessWidget {
                           });
                         } else {
                           // Show error if no device is connected
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please connect to a device first'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          showPrimarySnackbar(context,
+                              'Please connect to a device first');
                         }
                       },
                     ),

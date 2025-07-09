@@ -9,6 +9,8 @@ class DashboardState extends Equatable {
   final bool isDeviceConnected;
   final Map<String, dynamic>? deviceResponse;
   final double? uploadProgress; // 0.0 to 1.0, or null if not uploading
+  final int? screenWidth;
+  final int? screenHeight;
 
   const DashboardState({
     this.status = DashboardStatus.initial,
@@ -18,6 +20,8 @@ class DashboardState extends Equatable {
     this.isDeviceConnected = false,
     this.deviceResponse,
     this.uploadProgress,
+    this.screenWidth,
+    this.screenHeight,
   });
 
   DashboardState copyWith({
@@ -28,6 +32,8 @@ class DashboardState extends Equatable {
     bool? isDeviceConnected,
     Map<String, dynamic>? deviceResponse,
     double? uploadProgress,
+    int? screenWidth,
+    int? screenHeight,
   }) {
     return DashboardState(
       status: status ?? this.status,
@@ -37,6 +43,8 @@ class DashboardState extends Equatable {
       isDeviceConnected: isDeviceConnected ?? this.isDeviceConnected,
       deviceResponse: deviceResponse ?? this.deviceResponse,
       uploadProgress: uploadProgress,
+      screenWidth: screenWidth ?? this.screenWidth,
+      screenHeight: screenHeight ?? this.screenHeight,
     );
   }
 
@@ -49,5 +57,7 @@ class DashboardState extends Equatable {
     isDeviceConnected,
     deviceResponse,
     uploadProgress,
+    screenWidth,
+    screenHeight,
   ];
 } 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
@@ -29,9 +30,23 @@ class DashboardHeader extends HookWidget {
                 if (!val && isOn.value) {
                   // Toggling from ON to OFF, send power off
                   await cubit.sendPowerSequence(power: 0, sno: 3);
+                  if (!context.mounted) return;
+                  showPrimarySnackbar(
+                    context,
+                    'Device turned OFF',
+                    colorTint: Colors.red,
+                    icon: Icons.power_settings_new,
+                  );
                 } else if (val && !isOn.value) {
                   // Toggling from OFF to ON, send power on
                   await cubit.sendPowerSequence(power: 1, sno: 2);
+                  if (!context.mounted) return;
+                  showPrimarySnackbar(
+                    context,
+                    'Device turned ON',
+                    colorTint: Colors.green,
+                    icon: Icons.check,
+                  );
                 }
                 isOn.value = val;
               },

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hookaba/core/common_widgets/primary_button.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -150,12 +151,8 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                                   .pickAndProcessImage(context);
                               if (processedFile != null) {
                                 pickedFile.value = processedFile;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Selected: 24{processedFile.name}'),
-                                  ),
-                                );
+                                showPrimarySnackbar(context,
+                                    'Selected: ${processedFile.name}');
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -187,11 +184,8 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                           ? () {}
                           : () {
                               if (pickedFile.value == null) {
-                                ScaffoldMessenger.of(innerContext).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Please select a file first')),
-                                );
+                                showPrimarySnackbar(innerContext,
+                                    'Please select a file first');
                                 return;
                               }
                               isUploading.value = true;
@@ -199,18 +193,11 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                                 try {
                                   await dashboardCubit
                                       .uploadImageOrGif(pickedFile.value!);
-                                  ScaffoldMessenger.of(innerContext)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Upload sent to device!')),
-                                  );
+                                  showPrimarySnackbar(innerContext,
+                                      'Upload sent to device!');
                                 } catch (e) {
-                                  ScaffoldMessenger.of(innerContext)
-                                      .showSnackBar(
-                                    SnackBar(
-                                        content: Text('Upload failed: $e')),
-                                  );
+                                  showPrimarySnackbar(innerContext,
+                                      'Upload failed: $e');
                                 } finally {
                                   isUploading.value = false;
                                 }

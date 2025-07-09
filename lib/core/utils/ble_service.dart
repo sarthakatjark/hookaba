@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:typed_data'; // Added for Uint8List
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:hookaba/core/utils/js_bridge_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart' as logger;
 import 'package:permission_handler/permission_handler.dart';
@@ -25,6 +27,7 @@ class BlePermissionException implements Exception {
 @singleton
 class BLEService {
   final logger.Logger _logger = logger.Logger();
+  final JsBridgeService jsBridgeService;
 
   // Add StreamController for notifications
   final _notificationController =
@@ -44,19 +47,7 @@ class BLEService {
   static const String TARGET_CHARACTERISTIC_UUID =
       '49535343-aca3-481c-91ec-d85e28a60318';
 
-  // Known service and characteristic UUIDs for your device
-  static const List<String> VALID_SERVICE_PREFIXES = ['0000FFF0', '0000FF00'];
-  static const List<String> VALID_WRITE_CHAR_PREFIXES = [
-    '0000FFF2',
-    '0000FF02'
-  ];
-  static const List<String> VALID_NOTIFY_CHAR_PREFIXES = [
-    '0000FFF1',
-    '0000FF01'
-  ];
-  static const List<String> VALID_DEVICE_PREFIXES = ['YS', 'TL', 'LO'];
-
-  // Add MTU size constant
+  
   static const int DEFAULT_MTU_SIZE = 180; // Maximum MTU size for the device
 
   // Add command sequence numbers
@@ -80,7 +71,7 @@ class BLEService {
     _connectedDevice = device;
   }
 
-  BLEService() {
+  BLEService(this.jsBridgeService) {
     // Monitor BLE status
     FlutterBluePlus.state.listen((state) {
       _logger.d('📡 BLE Status: $state');
@@ -92,10 +83,6 @@ class BLEService {
   }
 
   Stream<List<ScanResult>> get discoveredDevices => FlutterBluePlus.scanResults;
-
-  
-
- 
 
   Future<void> startScan() async {
     try {
@@ -211,6 +198,26 @@ class BLEService {
 
         // 11. Discover services after stable connection
         await discoverServicesAndCharacteristics(device);
+
+        // 12. Set up notification forwarding to JS
+        final services = await device.discoverServices();
+        for (var service in services) {
+          for (var char in service.characteristics) {
+            final charUuid = char.uuid.toString().toLowerCase();
+            if ((charUuid.contains('fff1') || charUuid.contains('ff01')) &&
+                char.properties.notify) {
+              await char.setNotifyValue(true);
+              char.value.listen((data) {
+                final hex = data
+                    .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                    .join(' ');
+                _logger.i('🔔 BLE notification received: $hex');
+                onBleNotification(Uint8List.fromList(data));
+              });
+            }
+          }
+        }
+
         return; // Success! Exit the retry loop
       } catch (e) {
         if (e.toString().contains('permissions')) {
@@ -621,8 +628,8 @@ class BLEService {
       // Listen for scan results
       await for (final results in FlutterBluePlus.scanResults) {
         for (final result in results) {
-          final name = result.device.name;
-          _logger.i('Discovered device: ' + name + ' (' + result.device.remoteId.toString() + ')');
+          final name = result.device.platformName;
+          _logger.i('Discovered device: $name (${result.device.remoteId})');
           if (isValidDeviceName(name)) {
             _logger
                 .i('✅ Found valid device: $name (${result.device.remoteId})');
@@ -707,5 +714,23 @@ class BLEService {
       _logger.e('Error requesting Bluetooth permissions: $e');
       return false;
     }
+  }
+
+  // Add this method to forward BLE notifications to JS for parsing
+  void forwardNotificationToJs(Uint8List data,
+      [JsBridgeService? jsBridgeServiceOrController]) {
+    final hexStr =
+        data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
+    (jsBridgeServiceOrController ?? jsBridgeService)
+        .parseTLVHexNotification(hexStr);
+  }
+
+  // Example BLE notification handler (add this where you handle notifications)
+  void onBleNotification(Uint8List data) {
+    final hexStr =
+        data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
+    _logger.i('🔔 BLE notification received: $hexStr');
+    // Forward to JS bridge for parsing
+    forwardNotificationToJs(data);
   }
 }

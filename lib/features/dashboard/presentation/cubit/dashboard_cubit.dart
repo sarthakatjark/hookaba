@@ -64,6 +64,8 @@ class DashboardCubit extends Cubit<DashboardState> {
     jsBridgeService.tlvStream.listen((tlvBytes) {
       sendTlvToBle(tlvBytes);
     });
+
+    getDeviceScreenProperty();
   }
 
   @override
@@ -228,7 +230,12 @@ class DashboardCubit extends Cubit<DashboardState> {
       return;
     }
     try {
-      await dashboardRepository.uploadImageOrGif(_connectedDevice!, file);
+      await dashboardRepository.uploadImageOrGif(
+        _connectedDevice!,
+        file,
+        width: state.screenWidth ?? 64,
+        height: state.screenHeight ?? 64,
+      );
       emit(state.copyWith(status: DashboardStatus.success));
     } catch (e) {
       emit(state.copyWith(
@@ -405,5 +412,33 @@ class DashboardCubit extends Cubit<DashboardState> {
   /// Picks an image, crops to box, compresses, and returns the processed XFile (or null if cancelled)
   Future<XFile?> pickAndProcessImage(BuildContext context) async {
     return await dashboardRepository.pickAndProcessImage(context);
+  }
+
+  /// Requests the device's screen property (width and height)
+  Future<void> getDeviceScreenProperty() async {
+    if (_connectedDevice == null) {
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'No device connected',
+      ));
+      return;
+    }
+    try {
+      final property =
+          await dashboardRepository.getDeviceScreenProperty(_connectedDevice!);
+      if (property != null &&
+          property.containsKey('width') &&
+          property.containsKey('height')) {
+        emit(state.copyWith(
+          screenWidth: property['width'],
+          screenHeight: property['height'],
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'Failed to get device screen property: $e',
+      ));
+    }
   }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:hookaba/core/common_widgets/primary_button.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -86,11 +87,7 @@ class SplitScreenUploadModal extends StatelessWidget {
                           source: ImageSource.gallery);
                       if (file != null) {
                         pickedFile.value = file;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Selected: ${file.name}'),
-                          ),
-                        );
+                        showPrimarySnackbar(context, 'Selected: ${file.name}');
                       }
                     },
                     style: ElevatedButton.styleFrom(

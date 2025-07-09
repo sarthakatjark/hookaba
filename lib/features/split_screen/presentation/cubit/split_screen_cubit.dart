@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hookaba/features/split_screen/data/datasources/split_screen_repository_impl.dart';
 
@@ -72,8 +73,8 @@ class SplitScreenCubit extends Cubit<SplitScreenState> {
       dashboardCubit: dashboardCubit,
       splits: state.splits,
       splitRatio: splitRatio ?? state.splitRatio,
-      onError: (msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg))),
-      onSuccess: (msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg))),
+      onError: (msg) => showPrimarySnackbar(context, msg),
+      onSuccess: (msg) => showPrimarySnackbar(context, msg),
     );
   }
 
@@ -100,8 +101,8 @@ class SplitScreenCubit extends Cubit<SplitScreenState> {
       context: context,
       splits: state.splits,
       splitRatio: state.splitRatio,
-      onError: (msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg))),
-      onSuccess: (msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg))),
+      onError: (msg) => showPrimarySnackbar(context, msg),
+      onSuccess: (msg) => showPrimarySnackbar(context, msg),
     );
   }
 }

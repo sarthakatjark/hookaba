@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -137,6 +138,7 @@ class JsBridgeService {
         const bytes = hexStr.trim().split(' ').map(b => parseInt(b, 16));
         const parsed = parse_ack(bytes);
         TLVChannel.postMessage(JSON.stringify({ ack: parsed }));
+        debugFlutter('parse ack: ' + parsed);
       } catch (e) {
         TLVChannel.postMessage(JSON.stringify({ ackError: e.toString() }));
       }
@@ -166,14 +168,21 @@ class JsBridgeService {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
         'TLVChannel',
-        onMessageReceived: (msg) {
+        onMessageReceived: (msg) async {
           final message = msg.message.trim();
           if (message.isNotEmpty) {
             try {
+              // If the message is a base64-encoded TLV, decode and add to stream
               final bytes = base64.decode(message);
               _tlvStreamController.add(Uint8List.fromList(bytes));
+
+              final hexStr = bytes
+                  .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                  .join(' ');
+              await parseTLVHexNotification(hexStr);
             } catch (e) {
-              // handle error
+              // If not base64, it might be a JSON error or ack, just log it
+              log('Received non-binary TLVChannel message: $message');
             }
           }
         },
@@ -210,6 +219,11 @@ class JsBridgeService {
   Future<void> sendJsonCommand(Map<String, dynamic> jsonCmd) async {
     final jsonStr = jsonEncode(jsonCmd);
     await _controller.runJavaScript("sendJsonTLV($jsonStr);");
+  }
+
+  /// Forwards a BLE notification hex string to JS for parsing
+  Future<void> parseTLVHexNotification(String hexStr) async {
+    await _controller.runJavaScript("parseTLVHexNotification('$hexStr');");
   }
 
   void dispose() {

@@ -12,6 +12,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart' as logger;
+import 'package:permission_handler/permission_handler.dart';
 
 class DashboardRepositoryImpl {
   final BLEService bleService;
@@ -62,7 +63,8 @@ class DashboardRepositoryImpl {
     _logger.i('✅ JS bridge command sent.');
   }
 
-  Future<void> uploadImageOrGif(BluetoothDevice device, XFile file) async {
+  Future<void> uploadImageOrGif(BluetoothDevice device, XFile file,
+      {required int width, required int height}) async {
     final raw = await file.readAsBytes();
     final isGif = raw.length >= 6 &&
         (String.fromCharCodes(raw.sublist(0, 6)) == 'GIF87a' ||
@@ -78,8 +80,8 @@ class DashboardRepositoryImpl {
         "pkts_program": {
           "id_pro": idPro,
           "property_pro": {
-            "width": 64,
-            "height": 64,
+            "width": width,
+            "height": height,
             "type_color": 2,
             "type_pro": 1,
             "play_fixed_time": 300,
@@ -88,7 +90,7 @@ class DashboardRepositoryImpl {
           },
           "list_region": [
             {
-              "info_pos": {"x": 0, "y": 0, "w": 64, "h": 64},
+              "info_pos": {"x": 0, "y": 0, "w": width, "h": height},
               "list_item": [
                 {
                   "type_item": "graphic",
@@ -110,19 +112,19 @@ class DashboardRepositoryImpl {
     } else {
       final decoded = img.decodeImage(raw);
       if (decoded == null) throw Exception("Unsupported or corrupt image");
-      final resized = img.copyResize(decoded, width: 64, height: 64);
-      final fixed = img.Image(width: 64, height: 64);
+      final resized = img.copyResize(decoded, width: width, height: height);
+      final fixed = img.Image(width: width, height: height);
       const cut = 28;
-      const rightWidth = 64 - cut;
-      for (int y = 0; y < 64; y++) {
-        for (int x = 0; x < 64; x++) {
+      final rightWidth = width - cut;
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
           if (x < rightWidth) {
             final srcX = x + cut;
             final pixel = resized.getPixel(srcX, y);
             fixed.setPixel(x, y, pixel);
           } else {
             final srcX = x - rightWidth;
-            final srcY = (y - 1).clamp(0, 63);
+            final srcY = (y - 1).clamp(0, height - 1);
             final pixel = resized.getPixel(srcX, srcY);
             fixed.setPixel(x, y, pixel);
           }
@@ -134,8 +136,8 @@ class DashboardRepositoryImpl {
         "pkts_program": {
           "id_pro": idPro,
           "property_pro": {
-            "width": 64,
-            "height": 64,
+            "width": width,
+            "height": height,
             "type_color": 2,
             "type_pro": 1,
             "play_fixed_time": 300,
@@ -143,7 +145,7 @@ class DashboardRepositoryImpl {
           },
           "list_region": [
             {
-              "info_pos": {"x": 0, "y": 0, "w": 64, "h": 64},
+              "info_pos": {"x": 0, "y": 0, "w": width, "h": height},
               "list_item": [
                 {"type_item": "graphic", "isGif": 0},
               ],
@@ -159,7 +161,7 @@ class DashboardRepositoryImpl {
   }
 
   Future<void> sendBlankCanvas(BluetoothDevice device,
-      {int width = 64, int height = 64}) async {
+      {required int width, required int height}) async {
     final idPro = DateTime.now().millisecondsSinceEpoch % 50000;
     final randomBytes =
         Uint8List.fromList(List.generate(20, (_) => Random().nextInt(256)));
@@ -350,6 +352,20 @@ class DashboardRepositoryImpl {
     }
   }
 
+  Future<Map<String, int>?> getDeviceScreenProperty(
+      BluetoothDevice device) async {
+    _logger.i(
+        '📏 Sending get property_pro command to device: ${device.platformName}');
+    final cmd = {
+      "cmd": {"get": "dev_info", "id_pro": 1},
+      "sno": 2
+    };
+
+    await jsBridgeService.sendJsonCommand(cmd);
+
+    return null;
+  }
+
   Map<String, dynamic>? animationTypeToInfoAnimate(AnimationType? type) {
     if (type == null) return null;
     switch (type) {
@@ -376,6 +392,14 @@ class DashboardRepositoryImpl {
 
   /// Picks an image, crops to box, compresses, and returns the processed XFile (or null if cancelled)
   Future<XFile?> pickAndProcessImage(BuildContext context) async {
+    // Request permissions for gallery access
+    final status = await Permission.photos.request();
+    if (!status.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permission denied to access photos.')),
+      );
+      return null;
+    }
     final picker = ImagePicker();
     final file = await picker.pickImage(source: ImageSource.gallery);
     if (file == null) return null;
