@@ -110,12 +110,90 @@ class SignUpCubit extends Cubit<SignUpState> {
 
   // SignUp logic
   void nameChanged(String name) => emit(state.copyWith(name: name));
-  void phoneChanged(String phone) => emit(state.copyWith(phone: phone));
+  void phoneChanged(String phone) {
+    // Remove all non-digit characters
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    // Prepend +91 if not already present and length is 10 (for India)
+    String formatted = digits;
+    if (digits.length == 10 && !digits.startsWith('91')) {
+      formatted = '+91$digits';
+    } else if (digits.startsWith('91') && digits.length == 12) {
+      formatted = '+$digits';
+    } else if (digits.startsWith('+91') && digits.length == 13) {
+      formatted = digits;
+    }
+    emit(state.copyWith(phone: formatted));
+  }
   void submit() async {
     emit(state.copyWith(loading: true, error: null));
     await Future.delayed(const Duration(seconds: 1));
     // Simulate success
     emit(state.copyWith(loading: false));
+  }
+
+  // --- Auth API methods ---
+  Future<dynamic> requestOtp(String phone) async {
+    emit(state.copyWith(loading: true, error: null));
+    try {
+      final result = await signUpRepository.requestOtp(phone);
+      emit(state.copyWith(loading: false));
+      return result;
+    } catch (e) {
+      emit(state.copyWith(loading: false, error: e.toString()));
+      rethrow;
+    }
+  }
+
+  Future<void> handlePostOtpVerification() async {
+    final name = state.name;
+    final number = state.phone;
+    if (name.isNotEmpty && number.isNotEmpty) {
+      emit(state.copyWith(loading: true));
+      try {
+        final result = await signUpRepository.createUser(name, number);
+        // Check for specific error cases in the result
+        if (result != null) {
+          if (result['error'] == 'Phone number already in use') {
+            emit(state.copyWith(loading: false, error: 'Phone number already in use'));
+            return;
+          } else if (result['error'] == 'Username already in use') {
+            emit(state.copyWith(loading: false, error: 'Username already in use'));
+            return;
+          } else if (result['errors'] != null) {
+            emit(state.copyWith(loading: false, error: 'Validation error: ${result['errors']}'));
+            return;
+          } else if (result['error'] == 'User creation failed') {
+            emit(state.copyWith(loading: false, error: 'User creation failed'));
+            return;
+          } else if (result['message'] == 'User created') {
+            // Success, user created
+            emit(state.copyWith(loading: false, error: null));
+            return;
+          }
+        }
+        // Fallback for unknown error
+        emit(state.copyWith(loading: false, error: 'Unknown error during user creation'));
+      } catch (e) {
+        emit(state.copyWith(loading: false, error: e.toString()));
+        rethrow;
+      }
+    }
+  }
+
+  Future<dynamic> verifyOtp(String phone, String otp) async {
+    emit(state.copyWith(loading: true, error: null));
+    try {
+      final result = await signUpRepository.verifyOtp(phone, otp);
+      emit(state.copyWith(loading: false));
+      // If verification is successful and access_token is present, create user
+      if (result != null && result['access_token'] != null) {
+        await handlePostOtpVerification();
+      }
+      return result;
+    } catch (e) {
+      emit(state.copyWith(loading: false, error: e.toString()));
+      rethrow;
+    }
   }
 
   // Device Scan logic

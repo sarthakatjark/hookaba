@@ -1,6 +1,10 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'
+    show FlutterSecureStorage;
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hookaba/core/network/network_dio.dart';
 import 'package:hookaba/core/routes/app_router.dart';
+import 'package:hookaba/core/utils/api_constants.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/js_bridge_service.dart';
 import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
@@ -28,10 +32,15 @@ Future<void> init() async {
   await jsBridgeService.init();
   sl.registerLazySingleton<JsBridgeService>(() => jsBridgeService);
 
+  // DioClient
+  sl.registerLazySingleton(() => DioClient(ApiEndpoints.baseUrl));
+
   // Repositories
   sl.registerLazySingleton(() => SignUpRepositoryImpl(
         bleService: sl<BLEService>(),
         pairedBox: sl<Box<String>>(),
+        dioClient: sl<DioClient>(),
+        secureStorage: const FlutterSecureStorage(),
       ));
 
   // SplitScreenRepositoryImpl registration

@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/extensions/responsive_ext.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../cubit/sign_up_cubit.dart';
 import '../widgets/onboarding_app_bar.dart';
 
 class OtpPage extends HookWidget {
@@ -22,14 +25,19 @@ class OtpPage extends HookWidget {
     final focusNodes = List.generate(6, (index) => useFocusNode());
     
     // Timer state
-    final secondsRemaining = useState(60);
+    final secondsRemaining = useState(20);
     final timer = useRef<Timer?>(null);
     
     // Terms acceptance state
-    final termsAccepted = useState(false);
+    final termsAccepted = useState(true);
 
-    // Start timer
+    // Cubit and state
+    final cubit = BlocProvider.of<SignUpCubit>(context);
+    final state = context.select((SignUpCubit c) => c.state);
+
+    // Start timer and request OTP on mount
     useEffect(() {
+      cubit.requestOtp(state.phone);
       timer.value = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (secondsRemaining.value > 0) {
           secondsRemaining.value--;
@@ -37,14 +45,25 @@ class OtpPage extends HookWidget {
           timer.cancel();
         }
       });
-
       return () {
         timer.value?.cancel();
       };
     }, []);
 
+    // Show error using snackbar if present
+    useEffect(() {
+      if (state.error != null && state.error!.isNotEmpty) {
+        final lines = state.error!.split('\n');
+        final shortError = lines.take(3).join('\n');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showPrimarySnackbar(context, shortError, colorTint: Colors.redAccent);
+        });
+      }
+      return null;
+    }, [state.error]);
+
     // Handle OTP completion
-    void onOtpComplete() {
+    void onOtpComplete() async {
       if (!termsAccepted.value) {
         showDialog(
           context: context,
@@ -80,20 +99,21 @@ class OtpPage extends HookWidget {
         );
         return;
       }
-
       final otp = controllers.map((c) => c.text).join();
       if (otp.length == 6) {
-        // Add any OTP validation logic here if needed
-        context.go('/onboarding/bluetooth-permission');
+        final result = await cubit.verifyOtp(state.phone, otp);
+        // Only navigate if backend says success
+        if (context.mounted && result != null && result['success'] == true) {
+          context.go('/onboarding/bluetooth-permission');
+        }
       }
     }
 
     // Handle resend OTP
     void onResendOtp() {
       if (secondsRemaining.value == 0) {
-        // Reset timer
-        secondsRemaining.value = 60;
-        // Add your resend OTP logic here
+        secondsRemaining.value = 20;
+        cubit.requestOtp(state.phone);
       }
     }
 
