@@ -24,7 +24,9 @@ class BluetoothPermissionPage extends StatelessWidget {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const OnboardingAppBar(),
+        appBar:  OnboardingAppBar(
+          onBack: () => context.go('/onboarding/signup'),
+        ),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),

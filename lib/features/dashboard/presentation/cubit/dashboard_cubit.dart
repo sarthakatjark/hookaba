@@ -441,4 +441,23 @@ class DashboardCubit extends Cubit<DashboardState> {
       ));
     }
   }
+
+  void refreshConnection() {
+    final connectedDevice = bleService.connectedDevice;
+    if (connectedDevice != null) {
+      _connectedDevice = connectedDevice;
+      _isDeviceConnected = true;
+      emit(state.copyWith(
+        connectedDevice: connectedDevice,
+        isDeviceConnected: true,
+      ));
+    } else {
+      _connectedDevice = null;
+      _isDeviceConnected = false;
+      emit(state.copyWith(
+        connectedDevice: null,
+        isDeviceConnected: false,
+      ));
+    }
+  }
 }

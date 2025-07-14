@@ -39,7 +39,7 @@ class ConnectionDialog extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _InfoRow(
+                  const _InfoRow(
                     label: 'Screen points',
                     value: '64*64',
                   ),

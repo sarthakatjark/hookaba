@@ -16,7 +16,6 @@ class PrimaryBottomNavBar extends StatelessWidget {
     const iconPaths = [
       'assets/images/home.svg',
       'assets/images/settings.svg',
-      'assets/images/search.svg',
       'assets/images/user.svg',
     ];
     return ClipRRect(
@@ -31,7 +30,7 @@ class PrimaryBottomNavBar extends StatelessWidget {
         unselectedItemColor: Colors.grey,
         currentIndex: currentIndex,
         onTap: onTap,
-        items: List.generate(4, (index) {
+        items: List.generate(3, (index) {
           final isSelected = currentIndex == index;
           return BottomNavigationBarItem(
             icon: SvgPicture.asset(

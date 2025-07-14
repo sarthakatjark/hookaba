@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class OnboardingAppBar extends StatelessWidget implements PreferredSizeWidget {
   const OnboardingAppBar({
     super.key,
     this.showBackButton = true,
     this.actions,
+    this.onBack,
   });
 
   final bool showBackButton;
   final List<Widget>? actions;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +21,7 @@ class OnboardingAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: showBackButton
           ? IconButton(
               icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: onBack ?? () => context.pop(),
             )
           : null,
       centerTitle: true,

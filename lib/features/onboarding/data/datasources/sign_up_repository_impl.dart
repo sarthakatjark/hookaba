@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -68,9 +70,10 @@ class SignUpRepositoryImpl {
 
   // --- Auth API methods ---
   Future<dynamic> requestOtp(String phone) async {
+    final platform = Platform.isAndroid ? 'android' : Platform.isIOS ? 'ios' : 'other';
     final response = await dioClient.post(
       ApiEndpoints.authRequestOtp,
-      data: {"phone": phone},
+      data: {"phone": phone, "platform": platform},
       requireAuth: false,
     );
     return response.data;
@@ -97,4 +100,4 @@ class SignUpRepositoryImpl {
     );
     return response.data;
   }
-} 
+}

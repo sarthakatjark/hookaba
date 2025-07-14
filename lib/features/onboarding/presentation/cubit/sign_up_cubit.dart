@@ -5,15 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart' show Cubit;
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/features/onboarding/data/datasources/sign_up_repository_impl.dart';
 import 'package:hookaba/features/onboarding/presentation/widgets/permission_denied_dialog.dart';
 import 'package:logger/logger.dart' as logger;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'sign_up_state.dart';
 
 class SignUpCubit extends Cubit<SignUpState> {
   final SignUpRepositoryImpl signUpRepository;
+  final BLEService bleService;
   final _logger = logger.Logger();
 
   StreamSubscription<List<ScanResult>>? _scanSubscription;
@@ -21,6 +24,7 @@ class SignUpCubit extends Cubit<SignUpState> {
 
   SignUpCubit({
     required this.signUpRepository,
+    required this.bleService,
   }) : super(const SignUpState());
 
   @override
@@ -144,7 +148,24 @@ class SignUpCubit extends Cubit<SignUpState> {
     }
   }
 
-  Future<void> handlePostOtpVerification() async {
+  Future<dynamic> verifyOtp(String phone, String otp) async {
+    emit(state.copyWith(loading: true, error: null));
+    try {
+      final result = await signUpRepository.verifyOtp(phone, otp);
+      emit(state.copyWith(loading: false));
+      // If verification is successful and access_token is present, create user
+      if (result != null && result['access_token'] != null) {
+        final userCreated = await handlePostOtpVerification();
+        return {...?result, 'user_created': userCreated};
+      }
+      return result;
+    } catch (e) {
+      emit(state.copyWith(loading: false, error: e.toString()));
+      rethrow;
+    }
+  }
+
+  Future<bool> handlePostOtpVerification() async {
     final name = state.name;
     final number = state.phone;
     if (name.isNotEmpty && number.isNotEmpty) {
@@ -155,45 +176,31 @@ class SignUpCubit extends Cubit<SignUpState> {
         if (result != null) {
           if (result['error'] == 'Phone number already in use') {
             emit(state.copyWith(loading: false, error: 'Phone number already in use'));
-            return;
+            return false;
           } else if (result['error'] == 'Username already in use') {
             emit(state.copyWith(loading: false, error: 'Username already in use'));
-            return;
+            return false;
           } else if (result['errors'] != null) {
             emit(state.copyWith(loading: false, error: 'Validation error: ${result['errors']}'));
-            return;
+            return false;
           } else if (result['error'] == 'User creation failed') {
             emit(state.copyWith(loading: false, error: 'User creation failed'));
-            return;
+            return false;
           } else if (result['message'] == 'User created') {
             // Success, user created
             emit(state.copyWith(loading: false, error: null));
-            return;
+            return true;
           }
         }
         // Fallback for unknown error
         emit(state.copyWith(loading: false, error: 'Unknown error during user creation'));
+        return false;
       } catch (e) {
         emit(state.copyWith(loading: false, error: e.toString()));
         rethrow;
       }
     }
-  }
-
-  Future<dynamic> verifyOtp(String phone, String otp) async {
-    emit(state.copyWith(loading: true, error: null));
-    try {
-      final result = await signUpRepository.verifyOtp(phone, otp);
-      emit(state.copyWith(loading: false));
-      // If verification is successful and access_token is present, create user
-      if (result != null && result['access_token'] != null) {
-        await handlePostOtpVerification();
-      }
-      return result;
-    } catch (e) {
-      emit(state.copyWith(loading: false, error: e.toString()));
-      rethrow;
-    }
+    return false;
   }
 
   // Device Scan logic
@@ -242,6 +249,9 @@ class SignUpCubit extends Cubit<SignUpState> {
 
       // Use BLEService's connectToDevice directly
       await signUpRepository.connectToDevice(device);
+
+      // Set the connected device globally for dashboard
+      bleService.setConnectedDevice(device);
 
       // Store device in local storage
       final deviceName = device.platformName.isNotEmpty
@@ -337,5 +347,13 @@ class SignUpCubit extends Cubit<SignUpState> {
       return 'Phone number must be 10-11 digits';
     }
     return null;
+  }
+
+  // Common function to open a URL
+  static Future<void> openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 }

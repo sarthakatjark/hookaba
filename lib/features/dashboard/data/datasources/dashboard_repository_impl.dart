@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/enum.dart' show AnimationType;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
@@ -392,56 +393,68 @@ class DashboardRepositoryImpl {
 
   /// Picks an image, crops to box, compresses, and returns the processed XFile (or null if cancelled)
   Future<XFile?> pickAndProcessImage(BuildContext context) async {
-    // Request permissions for gallery access
     final status = await Permission.photos.request();
-    if (!status.isGranted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permission denied to access photos.')),
-      );
+    print('[pickAndProcessImage] Permission.photos status: $status '
+        '(isGranted= [32m${status.isGranted} [0m, isLimited= [33m${status.isLimited} [0m, '
+        'isDenied= [31m${status.isDenied} [0m, isPermanentlyDenied=${status.isPermanentlyDenied}, '
+        'isRestricted=${status.isRestricted})');
+
+    if (status.isGranted || status.isLimited) {
+      print('[pickAndProcessImage] Permission granted or limited, opening picker');
+      final picker = ImagePicker();
+      final file = await picker.pickImage(source: ImageSource.gallery);
+      if (file == null) return null;
+      // Check if GIF
+      final isGif = file.name.toLowerCase().endsWith('.gif');
+      XFile? finalFile = file;
+      if (!isGif) {
+        // Crop image to box shape
+        final cropped = await ImageCropper().cropImage(
+          sourcePath: file.path,
+          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Crop Image',
+              toolbarColor: Colors.black,
+              toolbarWidgetColor: Colors.white,
+              initAspectRatio: CropAspectRatioPreset.square,
+              lockAspectRatio: true,
+            ),
+            IOSUiSettings(
+              title: 'Crop Image',
+              aspectRatioLockEnabled: true,
+            ),
+          ],
+        );
+        if (cropped != null) {
+          // Compress image
+          final compressed = await FlutterImageCompress.compressAndGetFile(
+            cropped.path,
+            '${cropped.path}_compressed.jpg',
+            quality: 80,
+          );
+          if (compressed != null) {
+            finalFile = XFile(compressed.path);
+          } else {
+            finalFile = XFile(cropped.path);
+          }
+        } else {
+          // User cancelled cropping
+          return null;
+        }
+      }
+      return finalFile;
+    } else if (status.isDenied) {
+      print('[pickAndProcessImage] Permission denied, can ask again');
+      showPrimarySnackbar(context, 'Photo permission is required to select images.', colorTint: Colors.red, icon: Icons.error);
+      return null;
+    } else if (status.isPermanentlyDenied || status.isRestricted) {
+      print('[pickAndProcessImage] Permission permanently denied or restricted, opening settings');
+      showPrimarySnackbar(context, 'Please enable photo access in Settings.', colorTint: Colors.red, icon: Icons.error);
+      await Future.delayed(const Duration(milliseconds: 1200));
+      await openAppSettings();
       return null;
     }
-    final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery);
-    if (file == null) return null;
-    // Check if GIF
-    final isGif = file.name.toLowerCase().endsWith('.gif');
-    XFile? finalFile = file;
-    if (!isGif) {
-      // Crop image to box shape
-      final cropped = await ImageCropper().cropImage(
-        sourcePath: file.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Image',
-            toolbarColor: Colors.black,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true,
-          ),
-          IOSUiSettings(
-            title: 'Crop Image',
-            aspectRatioLockEnabled: true,
-          ),
-        ],
-      );
-      if (cropped != null) {
-        // Compress image
-        final compressed = await FlutterImageCompress.compressAndGetFile(
-          cropped.path,
-          '${cropped.path}_compressed.jpg',
-          quality: 80,
-        );
-        if (compressed != null) {
-          finalFile = XFile(compressed.path);
-        } else {
-          finalFile = XFile(cropped.path);
-        }
-      } else {
-        // User cancelled cropping
-        return null;
-      }
-    }
-    return finalFile;
+    return null;
   }
 }

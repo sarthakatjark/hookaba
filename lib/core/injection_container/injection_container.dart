@@ -11,6 +11,8 @@ import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hookaba/features/onboarding/data/datasources/sign_up_repository_impl.dart';
 import 'package:hookaba/features/onboarding/presentation/cubit/sign_up_cubit.dart';
+import 'package:hookaba/features/profile/data/datasources/profile_repository_impl.dart';
+import 'package:hookaba/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:hookaba/features/split_screen/data/datasources/split_screen_repository_impl.dart';
 
 final sl = GetIt.instance;
@@ -46,9 +48,21 @@ Future<void> init() async {
   // SplitScreenRepositoryImpl registration
   sl.registerLazySingleton(() => SplitScreenRepositoryImpl());
 
+  // ProfileRepositoryImpl registration
+  sl.registerLazySingleton(() => ProfileRepositoryImpl(
+        dioClient: sl<DioClient>(),
+        secureStorage: const FlutterSecureStorage(),
+      ));
+
+  // ProfileCubit registration
+  sl.registerFactory(() => ProfileCubit(
+        repository: sl<ProfileRepositoryImpl>(),
+      ));
+
   // Cubits
   sl.registerFactory(() => SignUpCubit(
         signUpRepository: sl<SignUpRepositoryImpl>(),
+        bleService: sl<BLEService>(),
       ));
   sl.registerLazySingleton(() => DashboardCubit(
         bleService: sl<BLEService>(),

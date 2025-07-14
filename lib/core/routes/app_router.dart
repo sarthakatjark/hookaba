@@ -13,6 +13,8 @@ import 'package:hookaba/features/onboarding/presentation/pages/otp_page.dart';
 import 'package:hookaba/features/onboarding/presentation/pages/searching_device_page.dart'
     show SearchingDevicePage;
 import 'package:hookaba/features/onboarding/presentation/pages/sign_up_page.dart';
+import 'package:hookaba/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:hookaba/features/profile/presentation/pages/profile_page.dart';
 import 'package:hookaba/features/program_list/presentation/pages/program_list_page.dart';
 import 'package:hookaba/features/split_screen/presentation/cubit/split_screen_cubit.dart';
 import 'package:hookaba/features/split_screen/presentation/pages/split_screen_preview_page.dart';
@@ -20,6 +22,7 @@ import 'package:hookaba/features/split_screen/presentation/pages/split_screen_te
 import 'package:hookaba/features/split_screen/presentation/widgets/split_screen_clear_all_dialog.dart';
 import 'package:hookaba/features/split_screen/presentation/widgets/split_screen_text_modal.dart';
 import 'package:injectable/injectable.dart';
+import 'package:provider/provider.dart';
 
 @singleton
 class AppRouter {
@@ -50,7 +53,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/dashboard',
-        builder: (context, state) => DashboardPage(),
+        builder: (context, state) => const DashboardPage(),
       ),
       GoRoute(
         path: '/dashboard/text',
@@ -119,6 +122,13 @@ class AppRouter {
         builder: (context, state) => BlocProvider.value(
           value: sl<DashboardCubit>(),
           child: const ProgramListPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/dashboard/profile',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (_) => sl<ProfileCubit>(),
+          child: const ProfilePage(),
         ),
       ),
       GoRoute(

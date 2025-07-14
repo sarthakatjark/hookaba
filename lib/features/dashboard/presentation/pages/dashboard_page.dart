@@ -13,6 +13,8 @@ import 'package:hookaba/features/dashboard/presentation/widgets/header.dart';
 import 'package:hookaba/features/dashboard/presentation/widgets/program_list.dart';
 import 'package:hookaba/features/dashboard/presentation/widgets/quick_actions.dart';
 import 'package:hookaba/features/dashboard/presentation/widgets/split_screen_widget.dart';
+import 'package:hookaba/features/onboarding/presentation/pages/searching_device_page.dart';
+import 'package:hookaba/features/profile/presentation/pages/profile_page.dart';
 import 'package:hookaba/features/settings/presentation/pages/settings_page.dart';
 
 class DashboardPage extends HookWidget {
@@ -55,80 +57,89 @@ class DashboardPage extends HookWidget {
 
     return BlocProvider.value(
       value: sl<DashboardCubit>(),
-      child: Scaffold(
-        backgroundColor: const Color(0xFF081122),
-        body: selectedIndex.value == 1
-            ? const SettingsPage()
-            : SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      BlocProvider.value(
-                        value: sl<DashboardCubit>(),
-                        child: const DashboardHeader(),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 180,
-                        child: PageView.builder(
-                          controller: pageController,
-                          onPageChanged: (index) => currentPage.value = index,
-                          itemCount: bagImages.length,
-                          itemBuilder: (context, index) {
-                            return Center(
-                              child: Image.asset(
-                                bagImages[index],
-                                height: 180,
-                                fit: BoxFit.contain,
+      child: BlocBuilder<DashboardCubit, DashboardState>(
+        builder: (context, state) {
+          if (!state.isDeviceConnected) {
+            return const SearchingDevicePage();
+          }
+          return Scaffold(
+            backgroundColor: const Color(0xFF081122),
+            body: selectedIndex.value == 1
+                ? const SettingsPage()
+                : selectedIndex.value == 2
+                    ? const ProfilePage()
+                    : SafeArea(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              BlocProvider.value(
+                                value: sl<DashboardCubit>(),
+                                child: const DashboardHeader(),
                               ),
-                            );
-                          },
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 180,
+                                child: PageView.builder(
+                                  controller: pageController,
+                                  onPageChanged: (index) => currentPage.value = index,
+                                  itemCount: bagImages.length,
+                                  itemBuilder: (context, index) {
+                                    return Center(
+                                      child: Image.asset(
+                                        bagImages[index],
+                                        height: 180,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text("QUICK ACTIONS", style: _labelStyle()),
+                              const SizedBox(height: 8),
+                              const QuickActions(),
+                              const SizedBox(height: 20),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("PROGRAM LIST", style: _labelStyle()),
+                                  GestureDetector(
+                                    onTap: () => context.push('/dashboard/programs'),
+                                    child: Text(
+                                      "VIEW ALL",
+                                      style: AppFonts.audiowideStyle(
+                                        fontSize: 12,
+                                        color: Colors.blueAccent,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              const ProgramList(),
+                              const SizedBox(height: 20),
+                              Text("BRIGHTNESS", style: _labelStyle()),
+                              const SizedBox(height: 8),
+                              BlocProvider.value(
+                                value: sl<DashboardCubit>(),
+                                child: const BrightnessSlider(),
+                              ),
+                              const SizedBox(height: 20),
+                              Text("SPLIT SCREEN FEATURE", style: _labelStyle()),
+                              const SizedBox(height: 8),
+                              const SplitScreen(),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text("QUICK ACTIONS", style: _labelStyle()),
-                      const SizedBox(height: 8),
-                      const QuickActions(),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("PROGRAM LIST", style: _labelStyle()),
-                          GestureDetector(
-                            onTap: () => context.push('/dashboard/programs'),
-                            child: Text(
-                              "VIEW ALL",
-                              style: AppFonts.audiowideStyle(
-                                fontSize: 12,
-                                color: Colors.blueAccent,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const ProgramList(),
-                      const SizedBox(height: 20),
-                      Text("BRIGHTNESS", style: _labelStyle()),
-                      const SizedBox(height: 8),
-                      BlocProvider.value(
-                        value: sl<DashboardCubit>(),
-                        child: const BrightnessSlider(),
-                      ),
-                      const SizedBox(height: 20),
-                      Text("SPLIT SCREEN FEATURE", style: _labelStyle()),
-                      const SizedBox(height: 8),
-                      const SplitScreen(),
-                    ],
-                  ),
-                ),
-              ),
-        bottomNavigationBar: PrimaryBottomNavBar(
-          currentIndex: selectedIndex.value,
-          onTap: (index) => selectedIndex.value = index,
-        ),
+            bottomNavigationBar: PrimaryBottomNavBar(
+              currentIndex: selectedIndex.value,
+              onTap: (index) => selectedIndex.value = index,
+            ),
+          );
+        },
       ),
     );
   }

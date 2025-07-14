@@ -79,66 +79,66 @@ class SettingsPage extends HookWidget {
                       titleStyle: AppFonts.audiowideStyle(color: Colors.white),
                     ),
                     const SizedBox(height: 32),
-                    Text(
-                      'CONNECTIONS',
-                      style: AppFonts.audiowideStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Choose the correct connect mode according to your device.',
-                      style: AppFonts.audiowideStyle(color: Colors.grey[400], fontSize: 14),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ConnectionOption(
-                            icon: Icons.bluetooth,
-                            label: 'Bluetooth',
-                            isSelected: state.selectedMode == ConnectionMode.bluetooth,
-                            onTap: () => context
-                                .read<SettingsCubit>()
-                                .setConnectionMode(ConnectionMode.bluetooth),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _ConnectionOption(
-                            icon: Icons.wifi,
-                            label: 'WiFi',
-                            isSelected: state.selectedMode == ConnectionMode.wifi,
-                            onTap: () => context
-                                .read<SettingsCubit>()
-                                .setConnectionMode(ConnectionMode.wifi),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: () => showConnectionDialog.value = false,
-                          child: Text(
-                            'Cancel',
-                            style: AppFonts.audiowideStyle(color: Colors.grey[400]),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => showConnectionDialog.value = true,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text('Proceed'),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // Text(
+                    //   'CONNECTIONS',
+                    //   style: AppFonts.audiowideStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    // ),
+                    // const SizedBox(height: 16),
+                    // Text(
+                    //   'Choose the correct connect mode according to your device.',
+                    //   style: AppFonts.audiowideStyle(color: Colors.grey[400], fontSize: 14),
+                    // ),
+                    // const SizedBox(height: 24),
+                    // Row(
+                    //   children: [
+                    //     Expanded(
+                    //       child: _ConnectionOption(
+                    //         icon: Icons.bluetooth,
+                    //         label: 'Bluetooth',
+                    //         isSelected: state.selectedMode == ConnectionMode.bluetooth,
+                    //         onTap: () => context
+                    //             .read<SettingsCubit>()
+                    //             .setConnectionMode(ConnectionMode.bluetooth),
+                    //       ),
+                    //     ),
+                    //     const SizedBox(width: 16),
+                    //     Expanded(
+                    //       child: _ConnectionOption(
+                    //         icon: Icons.wifi,
+                    //         label: 'WiFi',
+                    //         isSelected: state.selectedMode == ConnectionMode.wifi,
+                    //         onTap: () => context
+                    //             .read<SettingsCubit>()
+                    //             .setConnectionMode(ConnectionMode.wifi),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+                    // const SizedBox(height: 24),
+                    // Row(
+                    //   children: [
+                    //     TextButton(
+                    //       onPressed: () => showConnectionDialog.value = false,
+                    //       child: Text(
+                    //         'Cancel',
+                    //         style: AppFonts.audiowideStyle(color: Colors.grey[400]),
+                    //       ),
+                    //     ),
+                    //     const SizedBox(width: 16),
+                    //     Expanded(
+                    //       child: ElevatedButton(
+                    //         onPressed: () => showConnectionDialog.value = true,
+                    //         style: ElevatedButton.styleFrom(
+                    //           backgroundColor: Colors.blue,
+                    //           shape: RoundedRectangleBorder(
+                    //             borderRadius: BorderRadius.circular(8),
+                    //           ),
+                    //         ),
+                    //         child: const Text('Proceed'),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                   ],
                 ),
                 if (state.showClearConfirmation)

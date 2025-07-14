@@ -37,7 +37,7 @@ class DioClient {
             ),
           );
         }
-        options.headers['Authorization'] = token;
+        options.headers['Authorization'] = 'Bearer $token';
         handler.next(options);
       },
     ));
