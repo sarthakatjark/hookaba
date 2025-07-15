@@ -1,35 +1,27 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/datasources/profile_repository_impl.dart';
+import 'profile_state.dart';
 
-class ProfileCubit extends ChangeNotifier {
+class ProfileCubit extends Cubit<ProfileState> {
   final ProfileRepositoryImpl repository;
 
-  bool isLoading = false;
-  Map<String, dynamic>? profileData;
-  String? error;
-
-  ProfileCubit({required this.repository}) {
-    // Automatically load profile on cubit creation
+  ProfileCubit({required this.repository}) : super(const ProfileState()) {
     fetchProfile();
   }
 
   Future<void> fetchProfile() async {
-    isLoading = true;
-    error = null;
-    notifyListeners();
+    emit(state.copyWith(isLoading: true, error: null));
     try {
-      profileData = await repository.fetchCurrentUserProfile();
+      final profile = await repository.fetchCurrentUserProfile();
+      emit(state.copyWith(isLoading: false, profile: profile, error: null));
     } catch (e) {
-      error = e.toString();
+      emit(state.copyWith(isLoading: false, error: e.toString()));
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   Future<void> logout() async {
     await repository.logout();
-    // Optionally, notify listeners or handle navigation
-    notifyListeners();
+    // Optionally, emit a state or handle navigation
   }
-} 
+}

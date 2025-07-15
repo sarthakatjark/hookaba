@@ -22,7 +22,6 @@ import 'package:hookaba/features/split_screen/presentation/pages/split_screen_te
 import 'package:hookaba/features/split_screen/presentation/widgets/split_screen_clear_all_dialog.dart';
 import 'package:hookaba/features/split_screen/presentation/widgets/split_screen_text_modal.dart';
 import 'package:injectable/injectable.dart';
-import 'package:provider/provider.dart';
 
 @singleton
 class AppRouter {
@@ -126,8 +125,8 @@ class AppRouter {
       ),
       GoRoute(
         path: '/dashboard/profile',
-        builder: (context, state) => ChangeNotifierProvider(
-          create: (_) => sl<ProfileCubit>(),
+        builder: (context, state) => BlocProvider.value(
+          value: sl<ProfileCubit>(),
           child: const ProfilePage(),
         ),
       ),
