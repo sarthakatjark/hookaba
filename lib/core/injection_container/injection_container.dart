@@ -7,6 +7,7 @@ import 'package:hookaba/core/routes/app_router.dart';
 import 'package:hookaba/core/utils/api_constants.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/js_bridge_service.dart';
+import 'package:hookaba/core/utils/my_new_service.dart';
 import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hookaba/features/onboarding/data/datasources/sign_up_repository_impl.dart';
@@ -69,9 +70,14 @@ Future<void> init() async {
         dashboardRepository: DashboardRepositoryImpl(
           bleService: sl<BLEService>(),
           jsBridgeService: sl<JsBridgeService>(),
+          dioClient: sl<DioClient>(),
+          analyticsService: sl<AnalyticsService>(),
         ),
         jsBridgeService: sl<JsBridgeService>(),
       ));
+
+  // Register AnalyticsService
+  sl.registerLazySingleton(() => AnalyticsService());
 }
 
 // Helper extension to find a device by name or ID

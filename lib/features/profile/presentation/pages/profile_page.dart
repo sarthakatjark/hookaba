@@ -9,7 +9,6 @@ import 'package:hookaba/core/network/network_dio.dart';
 import 'package:hookaba/core/utils/api_constants.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
-import 'package:flutter/material.dart' show Colors;
 import 'package:url_launcher/url_launcher.dart' show LaunchMode, launchUrl;
 
 import '../../data/datasources/profile_repository_impl.dart';
@@ -59,7 +58,7 @@ class ProfilePage extends HookWidget {
                     );
                     await Future.delayed(const Duration(milliseconds: 1200));
                     if (!context.mounted) return;
-                    context.go('/onboarding/welcome');
+                    context.go('/onboarding');
                   },
                 ),
               ],
@@ -129,19 +128,20 @@ class _ProfileCard extends HookWidget {
             SizedBox(height: context.getHeight(ratioMobile: 0.04, ratioTablet: 0.05, ratioDesktop: 0.06)),
             // Visit Store Button
             SizedBox(
-              width: context.getWidth(ratioMobile: 0.5, ratioTablet: 0.3, ratioDesktop: 0.2),
+              width: context.getWidth(ratioMobile: 0.45, ratioTablet: 0.3, ratioDesktop: 0.2),
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
+
                   backgroundColor: Colors.green,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  elevation: 2,
+                      borderRadius: BorderRadius.circular(25)),
+                  
                   padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 ),
                 icon: const Icon(Icons.storefront, color: Colors.white),
                 label: Text('Visit Store',
-                    style: AppFonts.audiowideStyle(color: Colors.white)),
+                    style: AppFonts.dashHorizonStyle(color: Colors.white,fontSize: 18)),
                 onPressed: () async {
                   // Open the store URL
                   final url = Uri.parse('https://hookaba.com/');
@@ -155,7 +155,7 @@ class _ProfileCard extends HookWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                SizedBox(height: context.getHeight(ratioMobile: 0.04, ratioTablet: 0.06, ratioDesktop: 0.08)),
+                SizedBox(height: context.getHeight(ratioMobile: 0.06, ratioTablet: 0.06, ratioDesktop: 0.08)),
                 // Email
 
                 // Phone
@@ -167,7 +167,7 @@ class _ProfileCard extends HookWidget {
                     const SizedBox(width: 6),
                     Text(number,
                         style: AppFonts.audiowideStyle(
-                            color: AppColors.textSecondary)),
+                            color: AppColors.text,  fontSize: 15,fontWeight : FontWeight.w300)),
                   ],
                 ),
                 SizedBox(height: context.getHeight(ratioMobile: 0.01, ratioTablet: 0.015, ratioDesktop: 0.02)),
@@ -181,14 +181,14 @@ class _ProfileCard extends HookWidget {
                     Text(
                       'Joined: ${createdOn.day}/${createdOn.month}/${createdOn.year}',
                       style: AppFonts.audiowideStyle(
-                          color: AppColors.textSecondary),
+                          color: AppColors.text,  fontSize: 15,fontWeight : FontWeight.w400),
                     ),
                   ],
                 ),
-                SizedBox(height: context.getHeight(ratioMobile: 0.01, ratioTablet: 0.015, ratioDesktop: 0.02)),
+                
                 // User ID
 
-                SizedBox(height: context.getHeight(ratioMobile: 0.02, ratioTablet: 0.03, ratioDesktop: 0.04)),
+                SizedBox(height: context.getHeight(ratioMobile: 0.04, ratioTablet: 0.03, ratioDesktop: 0.04)),
                 // Open to offers switch
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,7 +199,7 @@ class _ProfileCard extends HookWidget {
                         children: [
                           Text(
                             'Are you open to offers?',
-                            style: AppFonts.audiowideStyle(color: Colors.white),
+                            style: AppFonts.audiowideStyle(color: Colors.white, fontSize: 15,fontWeight : FontWeight.w400 ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                           ),

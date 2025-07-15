@@ -27,7 +27,7 @@ import 'package:injectable/injectable.dart';
 @singleton
 class AppRouter {
   final router = GoRouter(
-    initialLocation: '/onboarding/welcome',
+    initialLocation: '/onboarding',
     routes: [
       GoRoute(
         path: '/onboarding',
@@ -76,7 +76,10 @@ class AppRouter {
       ),
       GoRoute(
         path: '/dashboard/library',
-        builder: (context, state) => const LibraryScreen(),
+        builder: (context, state) => BlocProvider.value(
+          value: sl<DashboardCubit>(),
+          child: const LibraryScreen(),
+        ),
       ),
       GoRoute(
         path: '/dashboard/split-screen',

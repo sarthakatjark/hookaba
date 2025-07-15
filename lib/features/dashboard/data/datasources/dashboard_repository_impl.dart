@@ -6,9 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
+import 'package:hookaba/core/network/network_dio.dart';
+import 'package:hookaba/core/utils/api_constants.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/enum.dart' show AnimationType;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
+import 'package:hookaba/core/utils/my_new_service.dart';
+import 'package:hookaba/features/dashboard/data/models/library_item_model.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,11 +22,15 @@ import 'package:permission_handler/permission_handler.dart';
 class DashboardRepositoryImpl {
   final BLEService bleService;
   final JsBridgeService jsBridgeService;
+  final DioClient dioClient;
+  final AnalyticsService analyticsService;
   final _logger = logger.Logger();
 
   DashboardRepositoryImpl({
     required this.bleService,
     required this.jsBridgeService,
+    required this.dioClient,
+    required this.analyticsService,
   });
 
   Future<void> sendPowerSequence({required int power, required int sno}) async {
@@ -456,5 +464,23 @@ class DashboardRepositoryImpl {
       return null;
     }
     return null;
+  }
+
+  Future<Map<String, dynamic>> fetchLibraryList({int page = 1, int perPage = 10}) async {
+    final response = await dioClient.get(
+      ApiEndpoints.libraryList(page: page, perPage: perPage),
+      requireAuth: true,
+    );
+    final data = response.data;
+    if (data is Map && data['items'] is List) {
+      return {
+        'items': (data['items'] as List)
+            .map((item) => LibraryItemModel.fromJson(item))
+            .toList(),
+        'page': data['page'] ?? 1,
+        'totalPages': data['total_pages'] ?? 1,
+      };
+    }
+    return {'items': [], 'page': 1, 'totalPages': 1};
   }
 }

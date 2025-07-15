@@ -11,6 +11,10 @@ class DashboardState extends Equatable {
   final double? uploadProgress; // 0.0 to 1.0, or null if not uploading
   final int? screenWidth;
   final int? screenHeight;
+  final List<LibraryItemModel> libraryItems;
+  final int currentPage;
+  final int totalPages;
+  final bool isLoadingMore;
 
   const DashboardState({
     this.status = DashboardStatus.initial,
@@ -22,6 +26,10 @@ class DashboardState extends Equatable {
     this.uploadProgress,
     this.screenWidth,
     this.screenHeight,
+    this.libraryItems = const [],
+    this.currentPage = 1,
+    this.totalPages = 1,
+    this.isLoadingMore = false,
   });
 
   DashboardState copyWith({
@@ -34,6 +42,10 @@ class DashboardState extends Equatable {
     double? uploadProgress,
     int? screenWidth,
     int? screenHeight,
+    List<LibraryItemModel>? libraryItems,
+    int? currentPage,
+    int? totalPages,
+    bool? isLoadingMore,
   }) {
     return DashboardState(
       status: status ?? this.status,
@@ -45,6 +57,10 @@ class DashboardState extends Equatable {
       uploadProgress: uploadProgress,
       screenWidth: screenWidth ?? this.screenWidth,
       screenHeight: screenHeight ?? this.screenHeight,
+      libraryItems: libraryItems ?? this.libraryItems,
+      currentPage: currentPage ?? this.currentPage,
+      totalPages: totalPages ?? this.totalPages,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
@@ -59,5 +75,9 @@ class DashboardState extends Equatable {
     uploadProgress,
     screenWidth,
     screenHeight,
+    libraryItems,
+    currentPage,
+    totalPages,
+    isLoadingMore,
   ];
 } 

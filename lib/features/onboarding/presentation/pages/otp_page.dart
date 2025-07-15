@@ -141,7 +141,7 @@ class OtpPage extends HookWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: OnboardingAppBar(
-        onBack: () => context.go('/onboarding/welcome'),
+        onBack: () => context.go('/onboarding'),
       ),
       body: SafeArea(
         child: Padding(

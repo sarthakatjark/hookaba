@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,8 +14,10 @@ import 'package:hookaba/core/utils/enum.dart'
     show AnimationType, DashboardStatus;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
 import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
+import 'package:hookaba/features/dashboard/data/models/library_item_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart' as logger;
+import 'package:path_provider/path_provider.dart';
 
 part 'dashboard_state.dart';
 
@@ -457,6 +461,76 @@ class DashboardCubit extends Cubit<DashboardState> {
       emit(state.copyWith(
         connectedDevice: null,
         isDeviceConnected: false,
+      ));
+    }
+  }
+
+  Future<void> fetchLibraryItems({int page = 1, int perPage = 10, bool loadMore = false}) async {
+    if (state.isLoadingMore) return;
+    emit(state.copyWith(isLoadingMore: true));
+    try {
+      final result = await dashboardRepository.fetchLibraryList(page: page, perPage: perPage);
+      final items = result['items'] as List<LibraryItemModel>;
+      final totalPages = result['totalPages'] as int;
+      final currentPage = result['page'] as int;
+
+      emit(state.copyWith(
+        status: DashboardStatus.success,
+        libraryItems: loadMore ? [...state.libraryItems, ...items] : items,
+        currentPage: currentPage,
+        totalPages: totalPages,
+        isLoadingMore: false,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'Failed to fetch library items: $e',
+        isLoadingMore: false,
+      ));
+    }
+  }
+
+  Future<void> uploadLibraryImageToBle(LibraryItemModel item) async {
+    try {
+      print('[LibraryUpload] Start upload for: ${item.imageUrl}');
+      // Download image to temp file
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = '${tempDir.path}/temp_library_image';
+      print('[LibraryUpload] Temp path: $tempPath');
+      final response = await Dio().get<List<int>>(
+        item.imageUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      print('[LibraryUpload] Downloaded bytes: ${response.data?.length}');
+      final file = await File(tempPath).writeAsBytes(response.data!);
+      print('[LibraryUpload] File written: ${file.path}');
+
+      // Convert to XFile
+      final xFile = XFile(file.path);
+      print('[LibraryUpload] XFile created: ${xFile.path}');
+
+      if (_connectedDevice == null) {
+        print('[LibraryUpload] No device connected!');
+        emit(state.copyWith(
+          status: DashboardStatus.error,
+          errorMessage: 'No device connected',
+        ));
+        return;
+      }
+      print('[LibraryUpload] Uploading to BLE device: ${_connectedDevice!.platformName}');
+      await dashboardRepository.uploadImageOrGif(
+        _connectedDevice!,
+        xFile,
+        width: state.screenWidth ?? 64,
+        height: state.screenHeight ?? 64,
+      );
+      print('[LibraryUpload] Upload to BLE complete!');
+      emit(state.copyWith(status: DashboardStatus.success));
+    } catch (e, st) {
+      print('[LibraryUpload] ERROR: $e\n$st');
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'Failed to upload image from library: $e',
       ));
     }
   }
