@@ -15,9 +15,11 @@ class BluetoothPermissionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('SignUpCubit instance in BluetoothPermissionPage: ${context.read<SignUpCubit>()}'); // DEBUG LOG
     return BlocListener<SignUpCubit, SignUpState>(
       listenWhen: (previous, current) => previous.bluetoothStatus != current.bluetoothStatus,
       listener: (context, state) {
+        print('Bluetooth status changed: ${state.bluetoothStatus}'); // DEBUG LOG
         if (state.bluetoothStatus == BluetoothPermissionStatus.granted) {
           context.go('/onboarding/searchingdevicepage');
         }

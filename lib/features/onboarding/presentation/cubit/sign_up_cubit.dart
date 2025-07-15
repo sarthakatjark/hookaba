@@ -50,6 +50,7 @@ class SignUpCubit extends Cubit<SignUpState> {
       if (!context.mounted) return;
       if (allGranted) {
         _logger.i('All Bluetooth permissions granted, navigating to device search page');
+        context.go('/onboarding/searchingdevicepage');
         emit(state.copyWith(bluetoothStatus: BluetoothPermissionStatus.granted));
         if (navigateDirectly) {
           context.go('/onboarding/searchingdevicepage');

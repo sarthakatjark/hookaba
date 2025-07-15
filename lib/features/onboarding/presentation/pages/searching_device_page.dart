@@ -43,6 +43,7 @@ class SearchingDevicePage extends StatelessWidget {
         },
         child: Scaffold(
           appBar: OnboardingAppBar(
+            onBack: () => context.go('/onboarding/signup'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.refresh, color: Colors.white),

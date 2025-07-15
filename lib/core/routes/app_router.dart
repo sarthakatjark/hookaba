@@ -7,6 +7,7 @@ import 'package:hookaba/features/dashboard/presentation/pages/dashboard_page.dar
 import 'package:hookaba/features/dashboard/presentation/pages/draw_screen.dart';
 import 'package:hookaba/features/dashboard/presentation/pages/library_screen.dart';
 import 'package:hookaba/features/dashboard/presentation/pages/text_editor_screen.dart';
+import 'package:hookaba/features/onboarding/presentation/cubit/sign_up_cubit.dart';
 import 'package:hookaba/features/onboarding/presentation/pages/bluetooth_permission_page.dart';
 import 'package:hookaba/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:hookaba/features/onboarding/presentation/pages/otp_page.dart';
@@ -29,26 +30,31 @@ class AppRouter {
     initialLocation: '/onboarding/welcome',
     routes: [
       GoRoute(
-        path: '/onboarding/welcome',
-        builder: (context, state) => OnboardingPage(
-          onGetStarted: () {},
+        path: '/onboarding',
+        builder: (context, state) => BlocProvider<SignUpCubit>(
+          create: (_) => sl<SignUpCubit>(),
+          child: OnboardingPage(
+            onGetStarted: () => context.go('/onboarding/signup'),
+          ),
         ),
-      ),
-      GoRoute(
-        path: '/onboarding/signup',
-        builder: (context, state) => const SignUpPage(),
-      ),
-      GoRoute(
-        path: '/onboarding/otp',
-        builder: (context, state) => const OtpPage(),
-      ),
-      GoRoute(
-        path: '/onboarding/searchingdevicepage',
-        builder: (context, state) => const SearchingDevicePage(),
-      ),
-      GoRoute(
-        path: '/onboarding/bluetooth-permission',
-        builder: (context, state) => const BluetoothPermissionPage(),
+        routes: [
+          GoRoute(
+            path: 'signup',
+            builder: (context, state) => const SignUpPage(),
+          ),
+          GoRoute(
+            path: 'otp',
+            builder: (context, state) => const OtpPage(),
+          ),
+          GoRoute(
+            path: 'bluetooth-permission',
+            builder: (context, state) => const BluetoothPermissionPage(),
+          ),
+          GoRoute(
+            path: 'searchingdevicepage',
+            builder: (context, state) => const SearchingDevicePage(),
+          ),
+        ],
       ),
       GoRoute(
         path: '/dashboard',
@@ -132,9 +138,10 @@ class AppRouter {
       ),
       GoRoute(
         path: '/',
-        builder: (context, state) => const Scaffold(
-          body: Center(
-            child: Text('Dashboard - Coming Soon'),
+        builder: (context, state) =>  BlocProvider<SignUpCubit>(
+          create: (_) => sl<SignUpCubit>(),
+          child: OnboardingPage(
+            onGetStarted: () => context.go('/onboarding/signup'),
           ),
         ),
       ),

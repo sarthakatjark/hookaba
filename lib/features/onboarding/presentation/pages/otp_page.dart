@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -27,6 +29,15 @@ class OtpPage extends HookWidget {
     // Terms acceptance state
     final termsAccepted = useState(true);
 
+    // App signature state for development
+    final appSignature = useState<String>('');
+
+    // Focus node for PinFieldAutoFill
+    final pinFocusNode = useFocusNode();
+
+    // Add a TextEditingController for PinFieldAutoFill
+    final pinController = useTextEditingController();
+
     // Cubit and state
     final cubit = BlocProvider.of<SignUpCubit>(context);
     final state = context.select((SignUpCubit c) => c.state);
@@ -41,7 +52,16 @@ class OtpPage extends HookWidget {
           timer.cancel();
         }
       });
-      SmsAutoFill().listenForCode();
+      Future.microtask(() async {
+        await SmsAutoFill().listenForCode();
+        final signature = await SmsAutoFill().getAppSignature;
+        appSignature.value = signature;
+        if (kDebugMode) {
+          print('App Signature: $signature');
+        }
+        // Autofocus the pin field
+        pinFocusNode.requestFocus();
+      });
       return () {
         timer.value?.cancel();
         SmsAutoFill().unregisterListener();
@@ -99,7 +119,7 @@ class OtpPage extends HookWidget {
       }
       if (otp != null && otp.length == 6) {
         final result = await cubit.verifyOtp(state.phone, otp);
-        print('OTP verify result: $result');
+        log('OTP verify result: $result');
         // Only navigate if backend returns access_token and user is created
         if (context.mounted &&
             result != null &&
@@ -159,11 +179,19 @@ class OtpPage extends HookWidget {
                         ratioTablet: 0.03,
                         ratioDesktop: 0.02)),
                 PinFieldAutoFill(
+                  controller: pinController,
                   codeLength: 6,
+                  focusNode: pinFocusNode,
                   onCodeChanged: (code) {
+                    if (code != null && code.length == 6) {
+                      pinController.text = code;
+                    }
                     onOtpComplete(code);
                   },
                   onCodeSubmitted: (code) {
+                    if (code != null && code.length == 6) {
+                      pinController.text = code;
+                    }
                     onOtpComplete(code);
                   },
                   decoration: BoxLooseDecoration(
@@ -289,6 +317,16 @@ class OtpPage extends HookWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
+                // DEV: Show app signature for backend SMS template setup
+                if (appSignature.value.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Text(
+                      'App Signature: \n${appSignature.value}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
               ],
             ),
           ),

@@ -18,6 +18,9 @@
     <!-- Add these for permission_handler -->
     <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED" />
     
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
