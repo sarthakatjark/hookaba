@@ -143,7 +143,7 @@ class ProgramListPage extends HookWidget {
               if (state.isDeleteDialogVisible)
                 DeleteDialog(
                   onConfirm: () =>
-                      context.read<ProgramListCubit>().deleteProgram(),
+                      context.read<ProgramListCubit>().deleteProgram(context),
                   onCancel: () =>
                       context.read<ProgramListCubit>().hideDeleteDialog(),
                 ),

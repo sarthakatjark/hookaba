@@ -1,6 +1,8 @@
 class ApiEndpoints {
   // Base URL
-  static const String baseUrl = "http://13.60.21.59:5000";
+  static const String baseUrl = "http://13.60.21.59";
+  //static const String baseUrl = "https://13.60.21.59";
+
 
   // Auth Endpoints
   static const String authRequestOtp = "$baseUrl/auth/request-otp";

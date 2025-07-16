@@ -58,8 +58,13 @@ class ProgramDataSource {
     } else {
       final isGif = jsonCmd.toString().contains('send_gif_src') || (jsonCmd['pkts_program']?['list_region']?[0]?['list_item']?[0]?['isGif'] == 1);
       if (isGif) {
-        // For GIFs, just send the command (no progress possible)
-        await dashboardRepository.sendImageOrGifViaJsBridge(jsonCmd, gifBase64: null);
+        // For GIFs, send the GIF bytes via BLE with progress, then send the JS command
+        if (program.gifBase64 == null || program.gifBase64!.isEmpty) {
+          throw Exception('No GIF data in program');
+        }
+        final gifBytes = base64Decode(program.gifBase64!);
+        await dashboardRepository.sendTlvToBle(device, gifBytes, onProgress: onProgress);
+        await dashboardRepository.sendImageOrGifViaJsBridge(jsonCmd, gifBase64: program.gifBase64);
       } else {
         // For images, send progress via sendTlvToBle
         final bmpBytes = program.bmpBytes;

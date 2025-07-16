@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
+import 'package:hookaba/features/program_list/presentation/cubit/program_list_cubit.dart';
+import 'package:hookaba/features/program_list/presentation/widgets/edit_program_name_sheet.dart';
 
 class ProgramItem extends StatelessWidget {
   final LocalProgramModel program;
@@ -39,14 +44,21 @@ class ProgramItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
-                    child: program.bmpBytes.isNotEmpty
+                    child: (program.gifBase64 != null && program.gifBase64!.isNotEmpty)
                         ? Image.memory(
-                            program.bmpBytes,
+                            base64Decode(program.gifBase64!),
                             width: 36,
                             height: 36,
                             fit: BoxFit.cover,
                           )
-                        : const Icon(Icons.apps, size: 24),
+                        : program.bmpBytes.isNotEmpty
+                            ? Image.memory(
+                                program.bmpBytes,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                              )
+                            : const Icon(Icons.apps, size: 24),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -68,7 +80,27 @@ class ProgramItem extends StatelessWidget {
                     width: 22,
                     height: 22,
                   ),
-                  onPressed: onTap,
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: const Color(0xFF081122),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                      ),
+                      builder: (modalContext) => EditProgramNameSheet(
+                        initialName: program.name,
+                        onSave: (newName) async {
+                          final updated = LocalProgramModel(
+                            id: program.id,
+                            name: newName,
+                            bmpBytes: program.bmpBytes,
+                            jsonCommand: program.jsonCommand,
+                          );
+                          await context.read<ProgramListCubit>().updateProgram(updated);
+                        },
+                      ),
+                    );
+                  },
                 ),
                 IconButton(
                   icon: SvgPicture.asset(

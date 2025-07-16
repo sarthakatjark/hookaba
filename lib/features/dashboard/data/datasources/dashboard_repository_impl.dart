@@ -135,6 +135,7 @@ class DashboardRepositoryImpl {
         name: file.name,
         bmpBytes: gifPreview,
         jsonCommand: jsonCmd,
+        gifBase64: gifBase64,
       ));
       return;
     } else {

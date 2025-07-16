@@ -14,11 +14,14 @@ class LocalProgramModel extends HiveObject {
   final Uint8List bmpBytes; // BMP representation of the image
   @HiveField(3)
   final Map<String, dynamic> jsonCommand;
+  @HiveField(4)
+  final String? gifBase64; // Base64 of the original GIF, if applicable
 
   LocalProgramModel({
     required this.id,
     required this.name,
     required this.bmpBytes,
     required this.jsonCommand,
+    this.gifBase64,
   });
 } 

@@ -21,13 +21,14 @@ class LocalProgramModelAdapter extends TypeAdapter<LocalProgramModel> {
       name: fields[1] as String,
       bmpBytes: fields[2] as Uint8List,
       jsonCommand: (fields[3] as Map).cast<String, dynamic>(),
+      gifBase64: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, LocalProgramModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class LocalProgramModelAdapter extends TypeAdapter<LocalProgramModel> {
       ..writeByte(2)
       ..write(obj.bmpBytes)
       ..writeByte(3)
-      ..write(obj.jsonCommand);
+      ..write(obj.jsonCommand)
+      ..writeByte(4)
+      ..write(obj.gifBase64);
   }
 
   @override

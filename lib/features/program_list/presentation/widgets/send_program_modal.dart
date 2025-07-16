@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -45,7 +46,17 @@ class SendProgramModal extends HookWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          if (program.bmpBytes.isNotEmpty)
+                          if ((program.gifBase64 != null && program.gifBase64!.isNotEmpty))
+                            Container(
+                              margin: const EdgeInsets.only(right: 12),
+                              child: Image.memory(
+                                base64Decode(program.gifBase64!),
+                                height: 48,
+                                width: 48,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          else if (program.bmpBytes.isNotEmpty)
                             Container(
                               margin: const EdgeInsets.only(right: 12),
                               child: Image.memory(
@@ -96,7 +107,16 @@ class SendProgramModal extends HookWidget {
           if (uploadProgress == null || uploadProgress == 0 || uploadProgress >= 1)
             Column(
               children: [
-                if (program.bmpBytes.isNotEmpty)
+                if ((program.gifBase64 != null && program.gifBase64!.isNotEmpty))
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Image.memory(
+                      base64Decode(program.gifBase64!),
+                      height: 80,
+                      fit: BoxFit.contain,
+                    ),
+                  )
+                else if (program.bmpBytes.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(bottom: 16),
                     child: Image.memory(

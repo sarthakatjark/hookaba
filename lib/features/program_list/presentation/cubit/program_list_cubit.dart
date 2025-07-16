@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hookaba/core/utils/enum.dart' show DashboardStatus;
+import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hookaba/features/program_list/data/datasources/programs_datasource.dart';
 import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 
@@ -74,7 +76,7 @@ class ProgramListCubit extends Cubit<ProgramListState> {
     ));
   }
 
-  void deleteProgram() {
+  void deleteProgram(BuildContext context) {
     if (state.selectedProgram != null) {
       final updatedPrograms = List<LocalProgramModel>.from(state.programs)
         ..removeWhere((program) => program.id == state.selectedProgram!.id);
@@ -85,6 +87,8 @@ class ProgramListCubit extends Cubit<ProgramListState> {
       ));
       // Remove from local storage
       programDataSource.deleteProgram(state.selectedProgram!.id);
+      // Refresh dashboard's local program list
+      context.read<DashboardCubit>().loadLocalPrograms();
     }
   }
 
@@ -93,15 +97,31 @@ class ProgramListCubit extends Cubit<ProgramListState> {
   }
 
   Future<void> sendProgramToDevice(LocalProgramModel program) async {
-    await programDataSource.sendProgramToDevice(
-      program,
-      onProgress: (progress) {
-        emit(state.copyWith(uploadProgress: progress));
-      },
-    );
-    emit(state.copyWith(uploadProgress: 1.0));
-    await Future.delayed(const Duration(milliseconds: 500));
-    emit(state.copyWith(uploadProgress: null));
+    final isGif = program.gifBase64 != null && program.gifBase64!.isNotEmpty;
+    if (isGif) {
+      // Simulate progress for GIF upload
+      for (double p = 0; p <= 1.0; p += 0.1) {
+        emit(state.copyWith(uploadProgress: p));
+        await Future.delayed(const Duration(milliseconds: 80));
+      }
+      await programDataSource.sendProgramToDevice(
+        program,
+        onProgress: null, // No real progress for GIF
+      );
+      emit(state.copyWith(uploadProgress: 1.0));
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(state.copyWith(uploadProgress: null));
+    } else {
+      await programDataSource.sendProgramToDevice(
+        program,
+        onProgress: (progress) {
+          emit(state.copyWith(uploadProgress: progress));
+        },
+      );
+      emit(state.copyWith(uploadProgress: 1.0));
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(state.copyWith(uploadProgress: null));
+    }
   }
 
   Future<void> sendTlvToBle(Uint8List tlvBytes) async {
@@ -131,5 +151,10 @@ class ProgramListCubit extends Cubit<ProgramListState> {
         uploadProgress: null,
       ));
     }
+  }
+
+  Future<void> updateProgram(LocalProgramModel updated) async {
+    await programDataSource.updateProgram(updated);
+    fetchProgramsFromLocal(page: currentPage, pageSize: pageSize);
   }
 } 
