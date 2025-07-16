@@ -43,6 +43,7 @@ class ProgramList extends StatelessWidget {
               child: ProgramCard(
                 title: program.name,
                 imageBytes: program.bmpBytes,
+                gifBase64: program.gifBase64,
               ),
             );
           },
