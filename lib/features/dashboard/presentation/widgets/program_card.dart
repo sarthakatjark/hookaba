@@ -1,12 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 
 class ProgramCard extends StatelessWidget {
   final String title;
-  final IconData icon;
-  final Color iconColor;
+  final Uint8List? imageBytes;
 
-  const ProgramCard(this.title, this.icon, this.iconColor, {super.key});
+  const ProgramCard({
+    super.key,
+    required this.title,
+    required this.imageBytes,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +26,26 @@ class ProgramCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: imageBytes != null && imageBytes!.isNotEmpty
+                ? Image.memory(
+                    imageBytes!,
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.cover,
+                  )
+                : const Icon(Icons.apps, color: Colors.white, size: 28),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              title,
-              style: AppFonts.dashHorizonStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                title,
+                style: AppFonts.dashHorizonStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),

@@ -1,6 +1,5 @@
 part of 'dashboard_cubit.dart';
 
-
 class DashboardState extends Equatable {
   final DashboardStatus status;
   final String? lastUploadedImage;
@@ -15,6 +14,7 @@ class DashboardState extends Equatable {
   final int currentPage;
   final int totalPages;
   final bool isLoadingMore;
+  final List<LocalProgramModel> localPrograms;
 
   const DashboardState({
     this.status = DashboardStatus.initial,
@@ -30,6 +30,7 @@ class DashboardState extends Equatable {
     this.currentPage = 1,
     this.totalPages = 1,
     this.isLoadingMore = false,
+    this.localPrograms = const [],
   });
 
   DashboardState copyWith({
@@ -46,6 +47,7 @@ class DashboardState extends Equatable {
     int? currentPage,
     int? totalPages,
     bool? isLoadingMore,
+    List<LocalProgramModel>? localPrograms,
   }) {
     return DashboardState(
       status: status ?? this.status,
@@ -61,6 +63,7 @@ class DashboardState extends Equatable {
       currentPage: currentPage ?? this.currentPage,
       totalPages: totalPages ?? this.totalPages,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      localPrograms: localPrograms ?? this.localPrograms,
     );
   }
 
@@ -79,5 +82,6 @@ class DashboardState extends Equatable {
     currentPage,
     totalPages,
     isLoadingMore,
+    localPrograms,
   ];
 } 

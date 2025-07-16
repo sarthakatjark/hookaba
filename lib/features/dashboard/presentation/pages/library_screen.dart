@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -17,6 +18,7 @@ class LibraryScreen extends HookWidget {
     final dashboardCubit = context.read<DashboardCubit>();
     final scrollController = useScrollController();
     final selectedTab = useState(0); // 0: All, 1: Animations, 2: Images, 3: GIF
+    final selectedIndex = useState<int?>(null); // Track selected image index
 
     useEffect(() {
       dashboardCubit.fetchLibraryItems();
@@ -128,14 +130,18 @@ class LibraryScreen extends HookWidget {
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
+                        final isSelected = selectedIndex.value == index;
                         return GestureDetector(
-                          onTap: () async {
-                            showLibraryUploadModal(context, item, dashboardCubit);
+                          onTap: () {
+                            selectedIndex.value = index;
                           },
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFF0D1A33),
                               borderRadius: BorderRadius.circular(12),
+                              border: isSelected
+                                  ? Border.all(color: Colors.blue, width: 3)
+                                  : null,
                             ),
                             child: Stack(
                               fit: StackFit.expand,
@@ -143,7 +149,12 @@ class LibraryScreen extends HookWidget {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: item.imageUrl.isNotEmpty
-                                      ? Image.network(item.imageUrl, fit: BoxFit.cover)
+                                      ? CachedNetworkImage(
+                                          imageUrl: item.imageUrl,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                                          errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image, size: 70, color: Colors.white24)),
+                                        )
                                       : const Center(child: Icon(Icons.image, size: 70, color: Colors.white24)),
                                 ),
                                 Positioned(
@@ -189,7 +200,15 @@ class LibraryScreen extends HookWidget {
         width: MediaQuery.of(context).size.width - 32,
         child: PrimaryButton(
           text: 'Proceed',
-          onPressed: () {},
+          onPressed: selectedIndex.value != null
+              ? () {
+                  final selected = selectedIndex.value;
+                  if (selected != null) {
+                    final item = context.read<DashboardCubit>().state.libraryItems[selected];
+                    showLibraryUploadModal(context, item, dashboardCubit);
+                  }
+                }
+              : null,
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

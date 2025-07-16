@@ -1,44 +1,49 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:hookaba/features/program_list/data/datasources/programs_datasource.dart';
+import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 
 import 'program_list_state.dart';
 
 class ProgramListCubit extends Cubit<ProgramListState> {
-  final DashboardCubit dashboardCubit;
-  StreamSubscription? _dashboardSub;
+  final ProgramDataSource programDataSource;
+  int _currentPage = 0;
+  final int _pageSize = 20;
+  bool _isFetching = false;
+  bool _hasMore = true;
 
-  ProgramListCubit(this.dashboardCubit) : super(const ProgramListState()) {
-    _dashboardSub = dashboardCubit.stream.listen(_onDashboardStateChanged);
+  ProgramListCubit(this.programDataSource) : super(const ProgramListState());
+
+  void fetchProgramsFromLocal({int page = 0, int? pageSize}) {
+    final size = pageSize ?? _pageSize;
+    final programs = programDataSource.getProgramsPage(page, size);
+    emit(state.copyWith(programs: programs));
+    _currentPage = page;
+    _hasMore = programs.length == size;
   }
 
-  Future<void> fetchProgramsFromDevice() async {
-    await dashboardCubit.getProgramGroup();
-  }
-
-  void _onDashboardStateChanged(DashboardState dashboardState) async {
-    // Step 1: Get program IDs
-    final idsPro = dashboardState.deviceResponse?['ack']?['pgm_play']?['ids_pro'];
-    if (idsPro != null && idsPro is List) {
-      await dashboardCubit.getProgramResourceIds(List<int>.from(idsPro));
+  void fetchNextPage() {
+    if (_isFetching || !_hasMore) return;
+    _isFetching = true;
+    final nextPage = _currentPage + 1;
+    final newPrograms = programDataSource.getProgramsPage(nextPage, _pageSize);
+    if (newPrograms.isNotEmpty) {
+      emit(state.copyWith(programs: [...state.programs, ...newPrograms]));
+      _currentPage = nextPage;
+      _hasMore = newPrograms.length == _pageSize;
+    } else {
+      _hasMore = false;
     }
-    // Step 2: Get program resource IDs
-    final pgmKeyList = dashboardState.deviceResponse?['ack']?['pgm_key'];
-    if (pgmKeyList != null && pgmKeyList is List) {
-      // Map to your Program model if needed
-      final programs = pgmKeyList.map<Program>((e) => Program(
-        id: e['id_pro'].toString(),
-        name: e['key'] ?? 'Unknown',
-        icon: '📦', // Placeholder, you may want to map icons
-      )).toList();
-      emit(state.copyWith(programs: programs));
-    }
+    _isFetching = false;
   }
+
+  bool get hasMore => _hasMore;
+  int get currentPage => _currentPage;
+  int get pageSize => _pageSize;
 
   @override
   Future<void> close() {
-    _dashboardSub?.cancel();
     return super.close();
   }
 
@@ -50,11 +55,11 @@ class ProgramListCubit extends Cubit<ProgramListState> {
     ));
   }
 
-  void selectProgram(Program program) {
+  void selectProgram(LocalProgramModel program) {
     emit(state.copyWith(selectedProgram: program));
   }
 
-  void showDeleteDialog(Program program) {
+  void showDeleteDialog(LocalProgramModel program) {
     emit(state.copyWith(
       selectedProgram: program,
       isDeleteDialogVisible: true,
@@ -69,9 +74,8 @@ class ProgramListCubit extends Cubit<ProgramListState> {
 
   void deleteProgram() {
     if (state.selectedProgram != null) {
-      final updatedPrograms = List<Program>.from(state.programs)
+      final updatedPrograms = List<LocalProgramModel>.from(state.programs)
         ..removeWhere((program) => program.id == state.selectedProgram!.id);
-      
       emit(state.copyWith(
         programs: updatedPrograms,
         isDeleteDialogVisible: false,
@@ -80,20 +84,11 @@ class ProgramListCubit extends Cubit<ProgramListState> {
     }
   }
 
-  void updateProgramSettings(Program program, {int? loops, int? playTime}) {
-    final index = state.programs.indexWhere((p) => p.id == program.id);
-    if (index != -1) {
-      final updatedProgram = program.copyWith(
-        loops: loops,
-        playTime: playTime,
-      );
-      final updatedPrograms = List<Program>.from(state.programs)
-        ..[index] = updatedProgram;
-      
-      emit(state.copyWith(
-        programs: updatedPrograms,
-        selectedProgram: updatedProgram,
-      ));
-    }
+  void updateProgramSettings(LocalProgramModel program, {int? loops, int? playTime}) {
+    emit(state.copyWith(selectedProgram: program));
+  }
+
+  Future<void> sendProgramToDevice(LocalProgramModel program) async {
+    await programDataSource.sendProgramToDevice(program);
   }
 } 

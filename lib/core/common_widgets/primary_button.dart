@@ -3,7 +3,7 @@ import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 
 class PrimaryButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String text;
   final Color? color;
   final TextStyle? textStyle;
@@ -11,8 +11,8 @@ class PrimaryButton extends StatelessWidget {
 
   const PrimaryButton({
     super.key,
-    required this.onPressed,
     required this.text,
+    this.onPressed,
     this.color,
     this.textStyle,
     this.loading = false,

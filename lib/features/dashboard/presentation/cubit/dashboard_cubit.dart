@@ -13,8 +13,10 @@ import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/enum.dart'
     show AnimationType, DashboardStatus;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
+import 'package:hookaba/core/utils/local_program_service.dart';
 import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
 import 'package:hookaba/features/dashboard/data/models/library_item_model.dart';
+import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart' as logger;
 import 'package:path_provider/path_provider.dart';
@@ -490,9 +492,9 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  Future<void> uploadLibraryImageToBle(LibraryItemModel item) async {
+  Future<void> uploadLibraryImageToBle(LibraryItemModel item, {void Function(double progress)? onProgress}) async {
     try {
-      print('[LibraryUpload] Start upload for: ${item.imageUrl}');
+      print('[LibraryUpload] Start upload for:  [${item.imageUrl}');
       // Download image to temp file
       final tempDir = await getTemporaryDirectory();
       final tempPath = '${tempDir.path}/temp_library_image';
@@ -514,6 +516,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         emit(state.copyWith(
           status: DashboardStatus.error,
           errorMessage: 'No device connected',
+          uploadProgress: null,
         ));
         return;
       }
@@ -523,15 +526,25 @@ class DashboardCubit extends Cubit<DashboardState> {
         xFile,
         width: state.screenWidth ?? 64,
         height: state.screenHeight ?? 64,
+        onProgress: (progress) {
+          emit(state.copyWith(uploadProgress: progress));
+          if (onProgress != null) onProgress(progress);
+        },
       );
       print('[LibraryUpload] Upload to BLE complete!');
-      emit(state.copyWith(status: DashboardStatus.success));
+      emit(state.copyWith(status: DashboardStatus.success, uploadProgress: null));
     } catch (e, st) {
       print('[LibraryUpload] ERROR: $e\n$st');
       emit(state.copyWith(
         status: DashboardStatus.error,
         errorMessage: 'Failed to upload image from library: $e',
+        uploadProgress: null,
       ));
     }
+  }
+
+  Future<void> loadLocalPrograms() async {
+    final localPrograms = LocalProgramService().getProgramsPage(0, 4);
+    emit(state.copyWith(localPrograms: localPrograms));
   }
 }

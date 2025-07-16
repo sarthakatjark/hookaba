@@ -58,7 +58,10 @@ class AppRouter {
       ),
       GoRoute(
         path: '/dashboard',
-        builder: (context, state) => const DashboardPage(),
+        builder: (context, state) => BlocProvider.value(
+          value: sl<DashboardCubit>(),
+          child: const DashboardPage(),
+        ),
       ),
       GoRoute(
         path: '/dashboard/text',

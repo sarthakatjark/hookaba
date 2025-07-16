@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
-import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:hookaba/core/utils/local_program_service.dart';
+import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
+import 'package:hookaba/features/program_list/data/datasources/programs_datasource.dart';
+import 'package:hookaba/features/program_list/presentation/widgets/send_program_modal.dart';
 
 import '../cubit/program_list_cubit.dart';
 import '../cubit/program_list_state.dart';
@@ -15,8 +19,25 @@ class ProgramListPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    final programDataSource = ProgramDataSource(
+      GetIt.I<LocalProgramService>(),
+      GetIt.I<DashboardRepositoryImpl>(),
+    );
+    final scrollController = useScrollController();
+
+    useEffect(() {
+      void onScroll() {
+        final cubit = context.read<ProgramListCubit>();
+        if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200 && cubit.hasMore) {
+          cubit.fetchNextPage();
+        }
+      }
+      scrollController.addListener(onScroll);
+      return () => scrollController.removeListener(onScroll);
+    }, [scrollController]);
+
     return BlocProvider(
-      create: (context) => ProgramListCubit(context.read<DashboardCubit>())..fetchProgramsFromDevice(),
+      create: (context) => ProgramListCubit(programDataSource)..fetchProgramsFromLocal(),
       child: Scaffold(
         backgroundColor: const Color(0xFF081122),
         appBar: AppBar(
@@ -33,6 +54,7 @@ class ProgramListPage extends HookWidget {
         ),
         body: BlocBuilder<ProgramListCubit, ProgramListState>(
           builder: (context, state) {
+            final cubit = context.read<ProgramListCubit>();
             return Stack(
               children: [
                 Column(
@@ -67,25 +89,47 @@ class ProgramListPage extends HookWidget {
                       ),
                     ),
                     Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: state.programs.length,
-                        itemBuilder: (context, index) {
-                          final program = state.programs[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ProgramItem(
-                              program: program,
-                              onTap: () => context
-                                  .read<ProgramListCubit>()
-                                  .selectProgram(program),
-                              onDelete: () => context
-                                  .read<ProgramListCubit>()
-                                  .showDeleteDialog(program),
+                      child: state.programs.isEmpty && !cubit.hasMore
+                          ? const Center(
+                              child: Text(
+                                'No programs found.',
+                                style: TextStyle(color: Colors.white, fontSize: 18),
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: scrollController,
+                              padding: const EdgeInsets.all(16),
+                              itemCount: state.programs.length + (cubit.hasMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == state.programs.length) {
+                                  // Show loading indicator at the end
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  );
+                                }
+                                final program = state.programs[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: ProgramItem(
+                                    program: program,
+                                    onTap: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: const Color(0xFF081122),
+                                        shape: const RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                                        ),
+                                        builder: (context) => SendProgramModal(program: program),
+                                      );
+                                    },
+                                    onDelete: () => context
+                                        .read<ProgramListCubit>()
+                                        .showDeleteDialog(program),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
                     ),
                   ],
                 ),

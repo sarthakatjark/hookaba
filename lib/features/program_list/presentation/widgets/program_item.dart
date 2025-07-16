@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
-
-import '../cubit/program_list_state.dart';
+import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 
 class ProgramItem extends StatelessWidget {
-  final Program program;
+  final LocalProgramModel program;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -40,10 +39,14 @@ class ProgramItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
-                    child: Text(
-                      program.icon,
-                      style: AppFonts.dashHorizonStyle(fontSize: 24),
-                    ),
+                    child: program.bmpBytes.isNotEmpty
+                        ? Image.memory(
+                            program.bmpBytes,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                          )
+                        : const Icon(Icons.apps, size: 24),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -55,6 +58,8 @@ class ProgramItem extends StatelessWidget {
                       color: Colors.white,
                       fontWeight: FontWeight.normal,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(

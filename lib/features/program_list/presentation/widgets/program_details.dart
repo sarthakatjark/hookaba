@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import '../cubit/program_list_state.dart';
+import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 
 class ProgramDetails extends HookWidget {
-  final Program program;
+  final LocalProgramModel program;
   final VoidCallback onClose;
   final void Function(int loops, int playTime) onUpdateSettings;
 
@@ -18,9 +17,7 @@ class ProgramDetails extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loops = useState(program.loops);
-    final playTime = useState(program.playTime);
-
+    // No loops/playTime in LocalProgramModel, so just show details
     return Container(
       color: const Color(0xFF081122),
       child: Column(
@@ -38,10 +35,8 @@ class ProgramDetails extends HookWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
-                    child: Text(
-                      program.icon,
-                      style: const TextStyle(fontSize: 32),
-                    ),
+                    // Display a placeholder icon or the image from bmpBytes
+                    child: Icon(Icons.apps, size: 32),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -56,7 +51,7 @@ class ProgramDetails extends HookWidget {
                       ),
                     ),
                     Text(
-                      'Loop',
+                      'Program',
                       style: TextStyle(color: Colors.grey[400]),
                     ),
                   ],
@@ -76,81 +71,18 @@ class ProgramDetails extends HookWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Views',
+                  'Details',
                   style: TextStyle(color: Colors.white),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove, color: Colors.white),
-                      onPressed: () {
-                        if (loops.value > 1) {
-                          loops.value--;
-                          onUpdateSettings(loops.value, playTime.value);
-                        }
-                      },
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0D1A33),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${loops.value} loops',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      onPressed: () {
-                        loops.value++;
-                        onUpdateSettings(loops.value, playTime.value);
-                      },
-                    ),
-                  ],
+                const SizedBox(height: 8),
+                Text(
+                  'ID: ${program.id}',
+                  style: const TextStyle(color: Colors.white),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Play Time',
-                  style: TextStyle(color: Colors.white),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove, color: Colors.white),
-                      onPressed: () {
-                        if (playTime.value > 1) {
-                          playTime.value--;
-                          onUpdateSettings(loops.value, playTime.value);
-                        }
-                      },
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0D1A33),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${playTime.value} sec',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      onPressed: () {
-                        playTime.value++;
-                        onUpdateSettings(loops.value, playTime.value);
-                      },
-                    ),
-                  ],
+                const SizedBox(height: 8),
+                Text(
+                  'JSON Command: ${program.jsonCommand}',
+                  style: const TextStyle(color: Colors.white),
                 ),
               ],
             ),
@@ -169,26 +101,9 @@ class ProgramDetails extends HookWidget {
                       ),
                     ),
                     child: const Text(
-                      'Cancel',
+                      'Close',
                       style: TextStyle(color: Colors.grey),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      onUpdateSettings(loops.value, playTime.value);
-                      onClose();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('Confirm'),
                   ),
                 ),
               ],

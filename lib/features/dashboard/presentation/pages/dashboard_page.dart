@@ -26,6 +26,11 @@ class DashboardPage extends HookWidget {
     final pageController = usePageController();
     final currentPage = useState(0);
 
+    useEffect(() {
+      context.read<DashboardCubit>().loadLocalPrograms();
+      return null;
+    }, []);
+
     // List of bag images
     final bagImages = [
       'assets/images/welcome_screen_bag.png',

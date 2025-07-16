@@ -11,8 +11,10 @@ import 'package:hookaba/core/utils/api_constants.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/enum.dart' show AnimationType;
 import 'package:hookaba/core/utils/js_bridge_service.dart';
+import 'package:hookaba/core/utils/local_program_service.dart';
 import 'package:hookaba/core/utils/my_new_service.dart';
 import 'package:hookaba/features/dashboard/data/models/library_item_model.dart';
+import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -73,7 +75,7 @@ class DashboardRepositoryImpl {
   }
 
   Future<void> uploadImageOrGif(BluetoothDevice device, XFile file,
-      {required int width, required int height}) async {
+      {required int width, required int height, void Function(double progress)? onProgress}) async {
     final raw = await file.readAsBytes();
     final isGif = raw.length >= 6 &&
         (String.fromCharCodes(raw.sublist(0, 6)) == 'GIF87a' ||
@@ -117,6 +119,23 @@ class DashboardRepositoryImpl {
         "sno": sno,
       };
       await sendImageOrGifViaJsBridge(jsonCmd, gifBase64: gifBase64);
+      // Generate GIF preview (first frame as BMP)
+      Uint8List gifPreview = Uint8List(0);
+      try {
+        final gifImage = img.decodeGif(raw);
+        if (gifImage != null) {
+          final firstFrame = gifImage;
+          final resized = img.copyResize(firstFrame, width: width, height: height);
+          gifPreview = Uint8List.fromList(img.encodeBmp(resized));
+        }
+      } catch (_) {}
+      // Store to local
+      await LocalProgramService().addProgram(LocalProgramModel(
+        id: idPro.toString(),
+        name: file.name,
+        bmpBytes: gifPreview,
+        jsonCommand: jsonCmd,
+      ));
       return;
     } else {
       final decoded = img.decodeImage(raw);
@@ -165,7 +184,16 @@ class DashboardRepositoryImpl {
         "sno": sno,
         "res_base64": base64Image,
       };
+      // Use the same BLE upload logic to show progress
+      await sendTlvToBle(device, Uint8List.fromList([]), onProgress: onProgress);
       await sendImageOrGifViaJsBridge(jsonCmd, base64Image: base64Image);
+      // Store to local
+      await LocalProgramService().addProgram(LocalProgramModel(
+        id: idPro.toString(),
+        name: file.name,
+        bmpBytes: base64Decode(base64Image),
+        jsonCommand: jsonCmd,
+      ));
     }
   }
 
@@ -264,6 +292,13 @@ class DashboardRepositoryImpl {
       "sno": 1,
     };
     await jsBridgeService.sendText(jsonCmd);
+    // Store to local
+    await LocalProgramService().addProgram(LocalProgramModel(
+      id: idPro.toString(),
+      name: text,
+      bmpBytes: Uint8List(0),
+      jsonCommand: jsonCmd,
+    ));
   }
 
   Future<void> getProgramGroup(BluetoothDevice device) async {

@@ -7,6 +7,7 @@ import 'package:hookaba/core/routes/app_router.dart';
 import 'package:hookaba/core/utils/api_constants.dart';
 import 'package:hookaba/core/utils/ble_service.dart';
 import 'package:hookaba/core/utils/js_bridge_service.dart';
+import 'package:hookaba/core/utils/local_program_service.dart';
 import 'package:hookaba/core/utils/my_new_service.dart';
 import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -14,6 +15,7 @@ import 'package:hookaba/features/onboarding/data/datasources/sign_up_repository_
 import 'package:hookaba/features/onboarding/presentation/cubit/sign_up_cubit.dart';
 import 'package:hookaba/features/profile/data/datasources/profile_repository_impl.dart';
 import 'package:hookaba/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 import 'package:hookaba/features/split_screen/data/datasources/split_screen_repository_impl.dart';
 
 final sl = GetIt.instance;
@@ -21,8 +23,16 @@ final sl = GetIt.instance;
 Future<void> init() async {
   // Hive
   await Hive.initFlutter();
+  Hive.registerAdapter(LocalProgramModelAdapter());
   var pairedBox = await Hive.openBox<String>('pairedDevices');
   sl.registerLazySingleton<Box<String>>(() => pairedBox);
+
+  // Programs box for storing local programs
+  var programsBox = await Hive.openBox<LocalProgramModel>('programs');
+  sl.registerLazySingleton<Box<LocalProgramModel>>(() => programsBox);
+
+  // Register LocalProgramService
+  sl.registerLazySingleton<LocalProgramService>(() => LocalProgramService());
 
   // Router
   sl.registerLazySingleton(() => AppRouter());
