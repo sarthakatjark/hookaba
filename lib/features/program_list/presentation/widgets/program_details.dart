@@ -34,7 +34,7 @@ class ProgramDetails extends HookWidget {
                     color: Colors.orange.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(
+                  child: const Center(
                     // Display a placeholder icon or the image from bmpBytes
                     child: Icon(Icons.apps, size: 32),
                   ),

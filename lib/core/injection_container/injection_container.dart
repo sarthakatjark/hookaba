@@ -15,7 +15,9 @@ import 'package:hookaba/features/onboarding/data/datasources/sign_up_repository_
 import 'package:hookaba/features/onboarding/presentation/cubit/sign_up_cubit.dart';
 import 'package:hookaba/features/profile/data/datasources/profile_repository_impl.dart';
 import 'package:hookaba/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:hookaba/features/program_list/data/datasources/programs_datasource.dart';
 import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
+import 'package:hookaba/features/program_list/presentation/cubit/program_list_cubit.dart';
 import 'package:hookaba/features/split_screen/data/datasources/split_screen_repository_impl.dart';
 
 final sl = GetIt.instance;
@@ -88,6 +90,26 @@ Future<void> init() async {
 
   // Register AnalyticsService
   sl.registerLazySingleton(() => AnalyticsService());
+
+  // Register DashboardRepositoryImpl
+  sl.registerLazySingleton<DashboardRepositoryImpl>(
+      () => DashboardRepositoryImpl(
+            bleService: sl<BLEService>(),
+            jsBridgeService: sl<JsBridgeService>(),
+            dioClient: sl<DioClient>(),
+            analyticsService: sl<AnalyticsService>(),
+          ));
+
+  // Register ProgramDataSource
+  sl.registerFactory<ProgramDataSource>(() => ProgramDataSource(
+    sl<LocalProgramService>(),
+    sl<DashboardRepositoryImpl>(),
+  ));
+
+  // Register ProgramListCubit
+  sl.registerFactory<ProgramListCubit>(() => ProgramListCubit(
+    sl<ProgramDataSource>(),
+  ));
 }
 
 // Helper extension to find a device by name or ID

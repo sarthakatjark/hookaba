@@ -43,9 +43,7 @@ class HookabaSnackbar extends HookWidget {
       final timer = Future.delayed(duration, () async {
         await controller.reverse();
       });
-      return () {
-        controller.dispose();
-      };
+      return null;
     }, const []);
 
     return Positioned(

@@ -37,12 +37,12 @@ class ProgramCard extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                title,
-                style: AppFonts.dashHorizonStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              title,
+              style: AppFonts.dashHorizonStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

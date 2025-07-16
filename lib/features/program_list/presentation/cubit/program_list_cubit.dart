@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hookaba/core/utils/enum.dart' show DashboardStatus;
 import 'package:hookaba/features/program_list/data/datasources/programs_datasource.dart';
 import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
 
@@ -81,6 +83,8 @@ class ProgramListCubit extends Cubit<ProgramListState> {
         isDeleteDialogVisible: false,
         selectedProgram: null,
       ));
+      // Remove from local storage
+      programDataSource.deleteProgram(state.selectedProgram!.id);
     }
   }
 
@@ -89,6 +93,43 @@ class ProgramListCubit extends Cubit<ProgramListState> {
   }
 
   Future<void> sendProgramToDevice(LocalProgramModel program) async {
-    await programDataSource.sendProgramToDevice(program);
+    await programDataSource.sendProgramToDevice(
+      program,
+      onProgress: (progress) {
+        emit(state.copyWith(uploadProgress: progress));
+      },
+    );
+    emit(state.copyWith(uploadProgress: 1.0));
+    await Future.delayed(const Duration(milliseconds: 500));
+    emit(state.copyWith(uploadProgress: null));
+  }
+
+  Future<void> sendTlvToBle(Uint8List tlvBytes) async {
+    final device = programDataSource.dashboardRepository.bleService.connectedDevice;
+    if (device == null) {
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'No device connected. Cannot send TLV.',
+      ));
+      return;
+    }
+    try {
+      await programDataSource.dashboardRepository.sendTlvToBle(
+        device,
+        tlvBytes,
+        onProgress: (progress) {
+          emit(state.copyWith(uploadProgress: progress));
+        },
+      );
+      emit(state.copyWith(uploadProgress: 1.0));
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(state.copyWith(uploadProgress: null));
+    } catch (e) {
+      emit(state.copyWith(
+        status: DashboardStatus.error,
+        errorMessage: 'Failed to send TLV: $e',
+        uploadProgress: null,
+      ));
+    }
   }
 } 

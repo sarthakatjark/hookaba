@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hookaba/core/common_widgets/primary_button.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/injection_container/injection_container.dart';
 import 'package:hookaba/core/utils/app_colors.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
@@ -50,6 +51,7 @@ class SearchingDevicePage extends StatelessWidget {
                 tooltip: 'Refresh',
                 onPressed: () {
                   context.read<SignUpCubit>().startScanWithPrefix();
+                  showPrimarySnackbar(context, 'Scanning for devices...');
                 },
               ),
             ],
@@ -191,27 +193,12 @@ class SearchingDevicePage extends StatelessWidget {
                                                               .connectToDevice(
                                                                   bleDevice);
                                                         } catch (e) {
-                                                          // Show dialog if device is not found
-                                                          showDialog(
-                                                            context: context,
-                                                            builder: (context) =>
-                                                                AlertDialog(
-                                                              title: const Text(
-                                                                  'Device Not Found'),
-                                                              content: const Text(
-                                                                  'Please turn on device'),
-                                                              actions: [
-                                                                TextButton(
-                                                                  onPressed: () =>
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop(),
-                                                                  child:
-                                                                      const Text(
-                                                                          'OK'),
-                                                                ),
-                                                              ],
-                                                            ),
+                                                          // Show snackbar if device is not found
+                                                          showPrimarySnackbar(
+                                                            context,
+                                                            'Device not found. Please turn on device',
+                                                            colorTint: Colors.red,
+                                                            icon: Icons.bluetooth,
                                                           );
                                                         }
                                                       },

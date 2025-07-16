@@ -1,3 +1,5 @@
+import 'dart:convert'; // Added for base64Encode
+
 import 'package:hookaba/core/utils/local_program_service.dart';
 import 'package:hookaba/features/dashboard/data/datasources/dashboard_repository_impl.dart';
 import 'package:hookaba/features/program_list/data/models/local_program_model.dart';
@@ -26,7 +28,7 @@ class ProgramDataSource {
 
   Future<void> clearAllPrograms() => _service.clearAllPrograms();
 
-  Future<void> sendProgramToDevice(LocalProgramModel program) async {
+  Future<void> sendProgramToDevice(LocalProgramModel program, {void Function(double progress)? onProgress}) async {
     final jsonCmd = program.jsonCommand;
     final pkts = jsonCmd['pkts_program'];
     final listRegion = pkts?['list_region'];
@@ -35,9 +37,10 @@ class ProgramDataSource {
         : null;
     final item = listItem != null && listItem.isNotEmpty ? listItem[0] : null;
 
+    final device = dashboardRepository.bleService.connectedDevice;
+    if (device == null) throw Exception('No device connected');
+
     if (item != null && item['type_item'] == 'text') {
-      final device = dashboardRepository.bleService.connectedDevice;
-      if (device == null) throw Exception('No device connected');
       await dashboardRepository.sendTextToBle(
         device,
         text: item['text'] ?? '',
@@ -53,14 +56,18 @@ class ProgramDataSource {
         stayingTime: pkts['property_pro']?['play_fixed_time']?.toDouble(),
       );
     } else {
-      // Determine if this is a GIF or image by checking jsonCmd or program data
       final isGif = jsonCmd.toString().contains('send_gif_src') || (jsonCmd['pkts_program']?['list_region']?[0]?['list_item']?[0]?['isGif'] == 1);
       if (isGif) {
-        // We don't store the original GIF, so just send the command (no preview)
+        // For GIFs, just send the command (no progress possible)
         await dashboardRepository.sendImageOrGifViaJsBridge(jsonCmd, gifBase64: null);
       } else {
-        final base64Image = program.bmpBytes.isNotEmpty ? program.bmpBytes : null;
-        await dashboardRepository.sendImageOrGifViaJsBridge(jsonCmd, base64Image: base64Image != null ? null : null);
+        // For images, send progress via sendTlvToBle
+        final bmpBytes = program.bmpBytes;
+        if (bmpBytes.isEmpty) throw Exception('No image data in program');
+        // Simulate TLV upload with progress
+        await dashboardRepository.sendTlvToBle(device, bmpBytes, onProgress: onProgress);
+        final base64Image = base64Encode(bmpBytes);
+        await dashboardRepository.sendImageOrGifViaJsBridge(jsonCmd, base64Image: base64Image);
       }
     }
   }

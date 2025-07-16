@@ -16,6 +16,7 @@ import 'package:hookaba/features/onboarding/presentation/pages/searching_device_
 import 'package:hookaba/features/onboarding/presentation/pages/sign_up_page.dart';
 import 'package:hookaba/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:hookaba/features/profile/presentation/pages/profile_page.dart';
+import 'package:hookaba/features/program_list/presentation/cubit/program_list_cubit.dart';
 import 'package:hookaba/features/program_list/presentation/pages/program_list_page.dart';
 import 'package:hookaba/features/split_screen/presentation/cubit/split_screen_cubit.dart';
 import 'package:hookaba/features/split_screen/presentation/pages/split_screen_preview_page.dart';
@@ -130,9 +131,12 @@ class AppRouter {
       ),
       GoRoute(
         path: '/dashboard/programs',
-        builder: (context, state) => BlocProvider.value(
+        builder: (context, state) => BlocProvider<ProgramListCubit>(
+          create: (_) => sl<ProgramListCubit>()..fetchProgramsFromLocal(),
+          child: BlocProvider.value(
           value: sl<DashboardCubit>(),
           child: const ProgramListPage(),
+          ),
         ),
       ),
       GoRoute(

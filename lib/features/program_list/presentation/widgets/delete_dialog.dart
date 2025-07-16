@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:hookaba/core/utils/app_fonts.dart';
 
 class DeleteDialog extends StatelessWidget {
   final VoidCallback onConfirm;
@@ -28,19 +28,13 @@ class DeleteDialog extends StatelessWidget {
             children: [
               Text(
                 'DELETE',
-                style: GoogleFonts.orbitron(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+                style: AppFonts.dashHorizonStyle(fontSize: 24, color: Colors.white),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Are you sure you want to delete this program from the list?',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: AppFonts.audiowideStyle(fontSize: 16, color: Colors.white),
               ),
               const SizedBox(height: 32),
               Row(
@@ -54,9 +48,9 @@ class DeleteDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'No',
-                        style: TextStyle(color: Colors.grey),
+                        style: AppFonts.audiowideStyle(color: Colors.grey),
                       ),
                     ),
                   ),
@@ -71,7 +65,7 @@ class DeleteDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Yes'),
+                      child: Text('Yes', style: AppFonts.audiowideStyle(color: Colors.white)),
                     ),
                   ),
                 ],
