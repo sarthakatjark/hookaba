@@ -15,18 +15,21 @@ class BluetoothPermissionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('SignUpCubit instance in BluetoothPermissionPage: ${context.read<SignUpCubit>()}'); // DEBUG LOG
+    print(
+        'SignUpCubit instance in BluetoothPermissionPage: ${context.read<SignUpCubit>()}'); // DEBUG LOG
     return BlocListener<SignUpCubit, SignUpState>(
-      listenWhen: (previous, current) => previous.bluetoothStatus != current.bluetoothStatus,
+      listenWhen: (previous, current) =>
+          previous.bluetoothStatus != current.bluetoothStatus,
       listener: (context, state) {
-        print('Bluetooth status changed: ${state.bluetoothStatus}'); // DEBUG LOG
+        print(
+            'Bluetooth status changed: ${state.bluetoothStatus}'); // DEBUG LOG
         if (state.bluetoothStatus == BluetoothPermissionStatus.granted) {
           context.go('/onboarding/searchingdevicepage');
         }
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar:  OnboardingAppBar(
+        appBar: OnboardingAppBar(
           onBack: () => context.go('/onboarding/signup'),
         ),
         body: SafeArea(
@@ -103,12 +106,18 @@ class BluetoothPermissionPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   PrimaryButton(
-                    onPressed: () => context.read<SignUpCubit>().requestBluetoothPermission(context, navigateDirectly: false),
+                    onPressed: () => context
+                        .read<SignUpCubit>()
+                        .requestBluetoothPermission(context,
+                            navigateDirectly: false),
                     text: 'Allow',
                   ),
                   SizedBox(height: context.height * 0.02),
                   PrimaryButton(
-                    onPressed: () => context.read<SignUpCubit>().skipBluetoothPermission(),
+                    onPressed: () {
+                      context.read<SignUpCubit>().skipBluetoothPermission();
+                      context.go('/dashboard');
+                    },
                     text: 'Don\'t Allow',
                     color: const Color(0xFF787880).withValues(alpha: 0.2),
                   ),
@@ -121,4 +130,4 @@ class BluetoothPermissionPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

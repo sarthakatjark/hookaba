@@ -88,7 +88,8 @@ class DashboardPage extends HookWidget {
                                 height: 180,
                                 child: PageView.builder(
                                   controller: pageController,
-                                  onPageChanged: (index) => currentPage.value = index,
+                                  onPageChanged: (index) =>
+                                      currentPage.value = index,
                                   itemCount: bagImages.length,
                                   itemBuilder: (context, index) {
                                     return Center(
@@ -107,11 +108,13 @@ class DashboardPage extends HookWidget {
                               const QuickActions(),
                               const SizedBox(height: 20),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text("PROGRAM LIST", style: _labelStyle()),
                                   GestureDetector(
-                                    onTap: () => context.push('/dashboard/programs'),
+                                    onTap: () =>
+                                        context.push('/dashboard/programs'),
                                     child: Text(
                                       "VIEW ALL",
                                       style: AppFonts.audiowideStyle(
@@ -132,7 +135,8 @@ class DashboardPage extends HookWidget {
                                 child: const BrightnessSlider(),
                               ),
                               const SizedBox(height: 20),
-                              Text("SPLIT SCREEN FEATURE", style: _labelStyle()),
+                              Text("SPLIT SCREEN FEATURE",
+                                  style: _labelStyle()),
                               const SizedBox(height: 8),
                               const SplitScreen(),
                             ],

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hookaba/core/common_widgets/primary_snackbar.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart'
     show DashboardCubit;
@@ -16,14 +17,16 @@ class DrawScreen extends HookWidget {
     final selectedColor = useState(Colors.white);
     final strokeWidth = useState(5.0);
     final points = useState<List<Offset>>([]);
+    final isErasing = useState(false);
     final canvasKey = useMemoized(() => GlobalKey());
     const gridSize = 64;
     const cellSize = 5.0; // 320 / 64
 
     // Clear BLE device and local canvas when screen opens
     useEffect(() {
+      final cubit = context.read<DashboardCubit>();
       Future.microtask(() async {
-        await context.read<DashboardCubit>().sendBlankCanvas();
+        await cubit.sendBlankCanvas();
         await Future.delayed(const Duration(milliseconds: 100));
         points.value = [];
       });
@@ -70,17 +73,35 @@ class DrawScreen extends HookWidget {
               child: GestureDetector(
                 key: canvasKey,
                 onPanUpdate: (details) async {
-                  final renderBox = canvasKey.currentContext?.findRenderObject() as RenderBox?;
+                  final renderBox = canvasKey.currentContext?.findRenderObject()
+                      as RenderBox?;
                   if (renderBox != null) {
-                    final localPosition = renderBox.globalToLocal(details.globalPosition);
-                    int x = (localPosition.dx / cellSize).floor().clamp(0, gridSize - 1);
-                    int y = (localPosition.dy / cellSize).floor().clamp(0, gridSize - 1);
+                    final localPosition =
+                        renderBox.globalToLocal(details.globalPosition);
+                    int x = (localPosition.dx / cellSize)
+                        .floor()
+                        .clamp(0, gridSize - 1);
+                    int y = (localPosition.dy / cellSize)
+                        .floor()
+                        .clamp(0, gridSize - 1);
 
-                    points.value = List.from(points.value)..add(Offset(x.toDouble(), y.toDouble()));
-
-                    // Send immediately to BLE (now batched)
-                    final color = context.read<DashboardCubit>().colorToBleInt(selectedColor.value);
-                    context.read<DashboardCubit>().enqueueDrawPixel(x, y, color);
+                    if (isErasing.value) {
+                      // Remove the point from the list if it exists
+                      points.value = List.from(points.value)
+                        ..removeWhere((p) => p.dx == x.toDouble() && p.dy == y.toDouble());
+                      // Send erase (black pixel) to BLE
+                      await context.read<DashboardCubit>().erasePixel(x, y);
+                    } else {
+                      points.value = List.from(points.value)
+                        ..add(Offset(x.toDouble(), y.toDouble()));
+                      // Send immediately to BLE (now batched)
+                      final color = context
+                          .read<DashboardCubit>()
+                          .colorToBleInt(selectedColor.value);
+                      context
+                          .read<DashboardCubit>()
+                          .enqueueDrawPixel(x, y, color);
+                    }
                   }
                 },
                 child: CustomPaint(
@@ -97,14 +118,13 @@ class DrawScreen extends HookWidget {
             ),
             const SizedBox(height: 32),
             // Debug button for BLE RTDraw
-            
+
             // Current Color and Color options (replaced with ColorPickerRow)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: ColorPickerRow(
                 label: 'Current Color',
                 colors: const [
-                  Colors.black,
                   Colors.blue,
                   Colors.green,
                   Colors.yellow,
@@ -123,32 +143,58 @@ class DrawScreen extends HookWidget {
             ),
             const SizedBox(height: 32),
             // Action buttons
-             Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _DrawActionButton(
-                      icon: Icons.cleaning_services,
-                      label: 'Clean',
-                      onTap: () async {
-                        await context.read<DashboardCubit>().sendBlankCanvas();
-                        await Future.delayed(const Duration(milliseconds: 100));
-                        points.value = [];
-                      }),
-                  _DrawActionButton(
-                      icon: Icons.edit_off,
-                      label: 'Erase',
-                      onTap: () {/* erase logic */}),
-                  _DrawActionButton(
-                      icon: Icons.save,
-                      label: 'Preserve',
-                      onTap: () {/* preserve logic */}),
-                  _DrawActionButton(
-                      icon: Icons.send,
-                      label: 'Send',
-                      onTap: () {/* send logic */}),
-                ],
-              ),
-            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _DrawActionButton(
+                    icon: Icons.cleaning_services,
+                    label: 'Clean',
+                    onTap: () async {
+                      await context.read<DashboardCubit>().sendBlankCanvas();
+                      await Future.delayed(const Duration(milliseconds: 100));
+                      points.value = [];
+                    }),
+                _DrawActionButton(
+                    icon: Icons.edit_off,
+                    label: 'Erase',
+                    onTap: () {
+                      isErasing.value = !isErasing.value;
+                    }),
+                _DrawActionButton(
+                    icon: Icons.save,
+                    label: 'Preserve',
+                    onTap: () async {
+                      await context
+                          .read<DashboardCubit>()
+                          .saveCurrentDrawingAsLocalProgram(
+                            points: points.value,
+                            color: selectedColor.value,
+                            width: gridSize,
+                            height: gridSize,
+                          );
+                      showPrimarySnackbar(
+                        context,
+                        'Drawing saved locally!',
+                        colorTint: Colors.green,
+                        icon: Icons.check_circle_outline,
+                      );
+                    }),
+                _DrawActionButton(
+                    icon: Icons.send,
+                    label: 'Send',
+                    onTap: () async {
+                      await context
+                          .read<DashboardCubit>()
+                          .saveCurrentDrawingAsLocalProgram(
+                            points: points.value,
+                            color: selectedColor.value,
+                            width: gridSize,
+                            height: gridSize,
+                          );
+                    }),
+              ],
+            ),
+
             const Spacer(),
           ],
         ),
@@ -191,7 +237,8 @@ class DrawingPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     for (final point in points) {
       canvas.drawRect(
-        Rect.fromLTWH(point.dx * cellSize, point.dy * cellSize, cellSize, cellSize),
+        Rect.fromLTWH(
+            point.dx * cellSize, point.dy * cellSize, cellSize, cellSize),
         paint,
       );
     }
@@ -243,7 +290,8 @@ class _DrawActionButton extends StatelessWidget {
               svgAsset,
               width: 28,
               height: 28,
-              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              colorFilter:
+                  const ColorFilter.mode(Colors.white, BlendMode.srcIn),
             )
           else
             Icon(icon, color: Colors.white, size: 28),

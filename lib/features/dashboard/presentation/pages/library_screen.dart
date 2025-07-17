@@ -8,7 +8,7 @@ import 'package:hookaba/core/common_widgets/primary_button.dart';
 import 'package:hookaba/core/utils/app_fonts.dart';
 import 'package:hookaba/core/utils/enum.dart';
 import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:hookaba/features/dashboard/presentation/widgets/show_library_upload_modal.dart';
+import 'package:hookaba/features/dashboard/presentation/widgets/show_upload_modal.dart'; // <-- Add this import
 
 class LibraryScreen extends HookWidget {
   const LibraryScreen({super.key});
@@ -24,17 +24,21 @@ class LibraryScreen extends HookWidget {
       dashboardCubit.fetchLibraryItems();
       void onScroll() {
         final state = context.read<DashboardCubit>().state;
-        if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200 &&
+        if (scrollController.position.pixels >=
+                scrollController.position.maxScrollExtent - 200 &&
             !state.isLoadingMore &&
             state.currentPage < state.totalPages) {
-          dashboardCubit.fetchLibraryItems(page: state.currentPage + 1, loadMore: true);
+          dashboardCubit.fetchLibraryItems(
+              page: state.currentPage + 1, loadMore: true);
         }
       }
+
       scrollController.addListener(onScroll);
       return () => scrollController.removeListener(onScroll);
     }, []);
 
-    Widget _buildTab(String text, int index, ValueNotifier<int> selectedTab) {
+    Widget buildTab(
+        String category, int index, ValueNotifier<int> selectedTab) {
       final isSelected = selectedTab.value == index;
       return GestureDetector(
         onTap: () => selectedTab.value = index,
@@ -49,7 +53,7 @@ class LibraryScreen extends HookWidget {
             ),
           ),
           child: Text(
-            text,
+            category,
             style: AppFonts.audiowideStyle(
               color: isSelected ? Colors.white : Colors.grey,
               fontSize: 15,
@@ -59,6 +63,8 @@ class LibraryScreen extends HookWidget {
         ),
       );
     }
+
+    List<String> categories = ['All', 'Animations', 'Images', 'GIF'];
 
     return Scaffold(
       backgroundColor: const Color(0xFF081122),
@@ -71,7 +77,8 @@ class LibraryScreen extends HookWidget {
         ),
         title: Text(
           'LIBRARY',
-          style: AppFonts.dashHorizonStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+          style: AppFonts.dashHorizonStyle(
+              color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
       body: Column(
@@ -94,12 +101,13 @@ class LibraryScreen extends HookWidget {
                       ),
                     ),
                   ),
-                  _buildTab('All', 0, selectedTab),
-                  const SizedBox(width: 12),
-                  _buildTab('Animations', 1, selectedTab),
-                  const SizedBox(width: 12),
-                  _buildTab('Images', 2, selectedTab),
-                  
+                  ...List.generate(
+                      categories.length,
+                      (i) => Row(children: [
+                            buildTab(categories[i], i, selectedTab),
+                            if (i != categories.length - 1)
+                              const SizedBox(width: 12),
+                          ])),
                 ],
               ),
             ),
@@ -108,28 +116,36 @@ class LibraryScreen extends HookWidget {
           Expanded(
             child: BlocBuilder<DashboardCubit, DashboardState>(
               builder: (context, state) {
-                if (state.status == DashboardStatus.loading && state.libraryItems.isEmpty) {
+                if (state.status == DashboardStatus.loading &&
+                    state.libraryItems.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (state.status == DashboardStatus.error) {
                   return Center(child: Text(state.errorMessage ?? 'Error'));
                 }
                 final items = state.libraryItems;
-                // TODO: Filter items based on selectedTab.value if you have type info
+                // Filter items based on selectedTab.value and categories
+                final filteredItems = selectedTab.value == 0
+                    ? items
+                    : items
+                        .where((item) =>
+                            item.category == categories[selectedTab.value])
+                        .toList();
                 return Stack(
                   children: [
                     GridView.builder(
                       controller: scrollController,
                       padding: const EdgeInsets.all(16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
                         childAspectRatio: 1,
                       ),
-                      itemCount: items.length,
+                      itemCount: filteredItems.length,
                       itemBuilder: (context, index) {
-                        final item = items[index];
+                        final item = filteredItems[index];
                         final isSelected = selectedIndex.value == index;
                         return GestureDetector(
                           onTap: () {
@@ -148,27 +164,47 @@ class LibraryScreen extends HookWidget {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
-                                  child: item.imageUrl.isNotEmpty
-                                      ? CachedNetworkImage(
+                                  child: item.type == 'gif'
+                                      ? Image.network(
+                                          item.imageUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error,
+                                                  stackTrace) =>
+                                              const Center(
+                                                  child: Icon(
+                                                      Icons.broken_image,
+                                                      size: 70,
+                                                      color: Colors.white24)),
+                                        )
+                                      : CachedNetworkImage(
                                           imageUrl: item.imageUrl,
                                           fit: BoxFit.cover,
-                                          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                                          errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image, size: 70, color: Colors.white24)),
-                                        )
-                                      : const Center(child: Icon(Icons.image, size: 70, color: Colors.white24)),
+                                          placeholder: (context, url) =>
+                                              const Center(
+                                                  child:
+                                                      CircularProgressIndicator()),
+                                          errorWidget: (context, url, error) =>
+                                              const Center(
+                                                  child: Icon(
+                                                      Icons.broken_image,
+                                                      size: 70,
+                                                      color: Colors.white24)),
+                                        ),
                                 ),
                                 Positioned(
                                   bottom: 8,
                                   left: 8,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: Colors.black.withOpacity(0.6),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       item.userId,
-                                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 12),
                                     ),
                                   ),
                                 ),
@@ -180,7 +216,9 @@ class LibraryScreen extends HookWidget {
                     ),
                     if (state.isLoadingMore)
                       const Positioned(
-                        left: 0, right: 0, bottom: 16,
+                        left: 0,
+                        right: 0,
+                        bottom: 16,
                         child: Center(child: CircularProgressIndicator()),
                       ),
                   ],
@@ -204,8 +242,26 @@ class LibraryScreen extends HookWidget {
               ? () {
                   final selected = selectedIndex.value;
                   if (selected != null) {
-                    final item = context.read<DashboardCubit>().state.libraryItems[selected];
-                    showLibraryUploadModal(context, item, dashboardCubit);
+                    final filteredItems = selectedTab.value == 0
+                        ? context.read<DashboardCubit>().state.libraryItems
+                        : context
+                            .read<DashboardCubit>()
+                            .state
+                            .libraryItems
+                            .where((item) =>
+                                item.category == categories[selectedTab.value])
+                            .toList();
+                    final item = filteredItems[selected];
+                    final device =
+                        context.read<DashboardCubit>().connectedDevice;
+                    if (device != null) {
+                      showLibraryUploadModal(
+                          context, item, device, dashboardCubit);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No device connected')),
+                      );
+                    }
                   }
                 }
               : null,
@@ -214,4 +270,4 @@ class LibraryScreen extends HookWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
-} 
+}

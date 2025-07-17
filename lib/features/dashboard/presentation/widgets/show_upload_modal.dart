@@ -13,7 +13,11 @@ import 'package:hookaba/features/dashboard/presentation/cubit/dashboard_cubit.da
 import 'package:image_picker/image_picker.dart';
 
 void showUploadModal(BuildContext context, BluetoothDevice device,
-    DashboardCubit dashboardCubit) {
+    DashboardCubit dashboardCubit, {
+  bool isLibrary = false,
+  String? imageUrl,
+  dynamic libraryItem, // Accept LibraryItemModel for library uploads
+}) {
   final ValueNotifier<XFile?> pickedFile = ValueNotifier<XFile?>(null);
   final ValueNotifier<bool> isUploading = ValueNotifier<bool>(false);
 
@@ -100,35 +104,45 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                     ),
                     child: Column(
                       children: [
-                        ValueListenableBuilder<XFile?>(
-                          valueListenable: pickedFile,
-                          builder: (context, file, _) {
-                            if (file != null) {
-                              final lower = file.path.toLowerCase();
-                              if (lower.endsWith('.png') ||
-                                  lower.endsWith('.jpg') ||
-                                  lower.endsWith('.jpeg') ||
-                                  lower.endsWith('.gif')) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12.0),
-                                  child: Image.file(
-                                    File(file.path),
-                                    height: 50,
-                                    fit: BoxFit.contain,
-                                  ),
-                                );
+                        if (isLibrary && imageUrl != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: Image.network(
+                              imageUrl,
+                              height: 50,
+                              fit: BoxFit.contain,
+                            ),
+                          )
+                        else
+                          ValueListenableBuilder<XFile?>(
+                            valueListenable: pickedFile,
+                            builder: (context, file, _) {
+                              if (file != null) {
+                                final lower = file.path.toLowerCase();
+                                if (lower.endsWith('.png') ||
+                                    lower.endsWith('.jpg') ||
+                                    lower.endsWith('.jpeg') ||
+                                    lower.endsWith('.gif')) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12.0),
+                                    child: Image.file(
+                                      File(file.path),
+                                      height: 50,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  );
+                                }
                               }
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: SvgPicture.asset(
-                                'assets/images/image-upload.svg',
-                                width: 48,
-                                height: 48,
-                              ),
-                            );
-                          },
-                        ),
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: SvgPicture.asset(
+                                  'assets/images/image-upload.svg',
+                                  width: 48,
+                                  height: 48,
+                                ),
+                              );
+                            },
+                          ),
                         Text(
                           "Upload your images/videos/animations",
                           style: AppFonts.audiowideStyle(
@@ -143,32 +157,33 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        ValueListenableBuilder<XFile?>(
-                          valueListenable: pickedFile,
-                          builder: (context, file, _) => ElevatedButton(
-                            onPressed: () async {
-                              final processedFile = await dashboardCubit
-                                  .pickAndProcessImage(context);
-                              if (processedFile != null) {
-                                pickedFile.value = processedFile;
-                                showPrimarySnackbar(context,
-                                    'Selected: ${processedFile.name}');
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30)),
-                            ),
-                            child: Text(
-                              file == null ? "Browse File" : "Change File",
-                              style: AppFonts.dashHorizonStyle(
-                                fontSize: 18,
-                                color: AppColors.text,
+                        if (!isLibrary)
+                          ValueListenableBuilder<XFile?>(
+                            valueListenable: pickedFile,
+                            builder: (context, file, _) => ElevatedButton(
+                              onPressed: () async {
+                                final processedFile = await dashboardCubit
+                                    .pickAndProcessImage(context);
+                                if (processedFile != null) {
+                                  pickedFile.value = processedFile;
+                                  showPrimarySnackbar(context,
+                                      'Selected: ${processedFile.name}');
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30)),
+                              ),
+                              child: Text(
+                                file == null ? "Browse File" : "Change File",
+                                style: AppFonts.dashHorizonStyle(
+                                  fontSize: 18,
+                                  color: AppColors.text,
+                                ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -183,7 +198,7 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                       onPressed: uploading || isUploadingProgress
                           ? () {}
                           : () {
-                              if (pickedFile.value == null) {
+                              if (!isLibrary && pickedFile.value == null) {
                                 showPrimarySnackbar(innerContext,
                                     'Please select a file first');
                                 return;
@@ -191,8 +206,12 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
                               isUploading.value = true;
                               (() async {
                                 try {
-                                  await dashboardCubit
-                                      .uploadImageOrGif(pickedFile.value!);
+                                  if (isLibrary && libraryItem != null) {
+                                    await dashboardCubit.uploadLibraryImageToBle(libraryItem);
+                                  } else if (pickedFile.value != null) {
+                                    await dashboardCubit
+                                        .uploadImageOrGif(pickedFile.value!);
+                                  }
                                   showPrimarySnackbar(innerContext,
                                       'Upload sent to device!');
                                 } catch (e) {
@@ -213,4 +232,8 @@ void showUploadModal(BuildContext context, BluetoothDevice device,
       );
     },
   );
+}
+
+void showLibraryUploadModal(BuildContext context, dynamic libraryItem, BluetoothDevice device, DashboardCubit dashboardCubit) {
+  showUploadModal(context, device, dashboardCubit, isLibrary: true, imageUrl: libraryItem.imageUrl, libraryItem: libraryItem);
 }

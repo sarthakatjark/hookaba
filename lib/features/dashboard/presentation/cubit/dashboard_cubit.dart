@@ -334,6 +334,12 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
+  /// Erases a single pixel (sets it to black) on the BLE device
+  Future<void> erasePixel(int x, int y) async {
+    const int black = 0;
+    await dashboardRepository.sendRTDrawPoint(x: x, y: y, color: black);
+  }
+
   Map<String, dynamic>? animationTypeToInfoAnimate(AnimationType? type) {
     return dashboardRepository.animationTypeToInfoAnimate(type);
   }
@@ -467,11 +473,13 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  Future<void> fetchLibraryItems({int page = 1, int perPage = 10, bool loadMore = false}) async {
+  Future<void> fetchLibraryItems(
+      {int page = 1, int perPage = 10, bool loadMore = false}) async {
     if (state.isLoadingMore) return;
     emit(state.copyWith(isLoadingMore: true));
     try {
-      final result = await dashboardRepository.fetchLibraryList(page: page, perPage: perPage);
+      final result = await dashboardRepository.fetchLibraryList(
+          page: page, perPage: perPage);
       final items = result['items'] as List<LibraryItemModel>;
       final totalPages = result['totalPages'] as int;
       final currentPage = result['page'] as int;
@@ -492,27 +500,28 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  Future<void> uploadLibraryImageToBle(LibraryItemModel item, {void Function(double progress)? onProgress}) async {
+  Future<void> uploadLibraryImageToBle(LibraryItemModel item,
+      {void Function(double progress)? onProgress}) async {
     try {
-      print('[LibraryUpload] Start upload for:  [${item.imageUrl}');
+      _logger.i('[LibraryUpload] Start upload for:  [${item.imageUrl}');
       // Download image to temp file
       final tempDir = await getTemporaryDirectory();
       final tempPath = '${tempDir.path}/temp_library_image';
-      print('[LibraryUpload] Temp path: $tempPath');
+      _logger.i('[LibraryUpload] Temp path: $tempPath');
       final response = await Dio().get<List<int>>(
         item.imageUrl,
         options: Options(responseType: ResponseType.bytes),
       );
-      print('[LibraryUpload] Downloaded bytes: ${response.data?.length}');
+      _logger.i('[LibraryUpload] Downloaded bytes: ${response.data?.length}');
       final file = await File(tempPath).writeAsBytes(response.data!);
-      print('[LibraryUpload] File written: ${file.path}');
+      _logger.i('[LibraryUpload] File written: ${file.path}');
 
       // Convert to XFile
       final xFile = XFile(file.path);
-      print('[LibraryUpload] XFile created: ${xFile.path}');
+      _logger.i('[LibraryUpload] XFile created: ${xFile.path}');
 
       if (_connectedDevice == null) {
-        print('[LibraryUpload] No device connected!');
+        _logger.e('[LibraryUpload] No device connected!');
         emit(state.copyWith(
           status: DashboardStatus.error,
           errorMessage: 'No device connected',
@@ -520,7 +529,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         ));
         return;
       }
-      print('[LibraryUpload] Uploading to BLE device: ${_connectedDevice!.platformName}');
+      _logger.i('[LibraryUpload] Uploading to BLE device: ${_connectedDevice!.platformName}');
       await dashboardRepository.uploadImageOrGif(
         _connectedDevice!,
         xFile,
@@ -531,10 +540,10 @@ class DashboardCubit extends Cubit<DashboardState> {
           if (onProgress != null) onProgress(progress);
         },
       );
-      print('[LibraryUpload] Upload to BLE complete!');
+      _logger.i('[LibraryUpload] Upload to BLE complete!');
       emit(state.copyWith(status: DashboardStatus.success, uploadProgress: null));
     } catch (e, st) {
-      print('[LibraryUpload] ERROR: $e\n$st');
+      _logger.e('[LibraryUpload] ERROR: $e\n$st');
       emit(state.copyWith(
         status: DashboardStatus.error,
         errorMessage: 'Failed to upload image from library: $e',
@@ -546,5 +555,22 @@ class DashboardCubit extends Cubit<DashboardState> {
   Future<void> loadLocalPrograms() async {
     final localPrograms = LocalProgramService().getProgramsPage(0, 4);
     emit(state.copyWith(localPrograms: localPrograms));
+  }
+
+  /// Saves the current drawing as a local program
+  Future<void> saveCurrentDrawingAsLocalProgram({
+    required List<Offset> points,
+    required Color color,
+    int width = 64,
+    int height = 64,
+    String? name,
+  }) async {
+    await DashboardRepositoryImpl.saveDrawingAsLocalProgram(
+      points: points,
+      color: color,
+      width: width,
+      height: height,
+      name: name,
+    );
   }
 }

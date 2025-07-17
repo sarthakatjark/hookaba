@@ -519,4 +519,57 @@ class DashboardRepositoryImpl {
     }
     return {'items': [], 'page': 1, 'totalPages': 1};
   }
+
+  /// Saves a drawing as a local program (static utility)
+  static Future<void> saveDrawingAsLocalProgram({
+    required List<Offset> points,
+    required Color color,
+    int width = 64,
+    int height = 64,
+    String? name,
+  }) async {
+    final img.Image image = img.Image(width: width, height: height);
+    for (final point in points) {
+      final x = point.dx.toInt();
+      final y = point.dy.toInt();
+      if (x >= 0 && x < width && y >= 0 && y < height) {
+        image.setPixelRgba(x, y, color.red, color.green, color.blue, color.alpha);
+      }
+    }
+    final bmpBytes = Uint8List.fromList(img.encodeBmp(image));
+    final idPro = DateTime.now().millisecondsSinceEpoch % 50000;
+    final randomBytes = Uint8List.fromList(List.generate(20, (_) => 0));
+    final idRes = base64Encode(randomBytes);
+    final sno = DateTime.now().millisecondsSinceEpoch % 65535;
+    final jsonCmd = {
+      "pkts_program": {
+        "id_pro": idPro,
+        "property_pro": {
+          "width": width,
+          "height": height,
+          "type_color": 2,
+          "type_pro": 1,
+          "play_fixed_time": 300,
+          "show_now": 1,
+        },
+        "list_region": [
+          {
+            "info_pos": {"x": 0, "y": 0, "w": width, "h": height},
+            "list_item": [
+              {"type_item": "graphic", "isGif": 0},
+            ],
+          },
+        ],
+      },
+      "id_res": idRes,
+      "sno": sno,
+      "res_base64": base64Encode(bmpBytes),
+    };
+    await LocalProgramService().addProgram(LocalProgramModel(
+      id: idPro.toString(),
+      name: name ?? 'Drawing ${DateTime.now()}',
+      bmpBytes: bmpBytes,
+      jsonCommand: jsonCmd,
+    ));
+  }
 }

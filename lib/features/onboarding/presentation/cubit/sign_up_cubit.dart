@@ -48,9 +48,10 @@ class SignUpCubit extends Cubit<SignUpState> {
       _logger.i('Requesting Bluetooth permissions...');
       final allGranted = await signUpRepository.requestBluetoothPermission();
       if (!context.mounted) return;
-      if (allGranted) {
+      // Explicitly check permission_handler's PermissionStatus and map to custom enum
+      final permissionStatus = await Permission.bluetooth.status;
+      if (permissionStatus == PermissionStatus.granted) {
         _logger.i('All Bluetooth permissions granted, navigating to device search page');
-        context.go('/onboarding/searchingdevicepage');
         emit(state.copyWith(bluetoothStatus: BluetoothPermissionStatus.granted));
         if (navigateDirectly) {
           context.go('/onboarding/searchingdevicepage');
@@ -110,6 +111,7 @@ class SignUpCubit extends Cubit<SignUpState> {
   }
 
   void skipBluetoothPermission() {
+    
     emit(state.copyWith(bluetoothStatus: BluetoothPermissionStatus.skipped));
   }
 

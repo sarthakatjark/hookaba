@@ -26,7 +26,7 @@ class QuickActions extends StatelessWidget {
             showPrimarySnackbar(
               context,
               'Device response: ${state.deviceResponse}',
-              //backgroundColor: Colors.blue,
+              colorTint: Colors.blue,
             );
           });
         }
